@@ -1,7 +1,5 @@
 package pe.edu.upc.jameofit.iam.presentation.view
 
-import android.content.Context
-import android.content.SharedPreferences
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,20 +9,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,19 +33,43 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import pe.edu.upc.jameofit.MainActivity
+import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.R
-
+import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
+import pe.edu.upc.jameofit.shared.presentation.components.ErrorSnackbarHost
+import pe.edu.upc.jameofit.shared.presentation.components.FullscreenLoader
+import pe.edu.upc.jameofit.shared.presentation.components.showErrorOnce
 
 @Composable
-fun Register(recordarPantalla: NavHostController, mainActivity: MainActivity){
+fun Register(
+    viewmodel: AuthViewModel,
+    goToLogin: () -> Unit,
+    onRegisterSuccess: () -> Unit
+) {
 
-    val pref: SharedPreferences = mainActivity.getSharedPreferences("pref_register", Context.MODE_PRIVATE)
+    val user by viewmodel.user.collectAsState()
+    val loginSuccess by viewmodel.loginSuccess.collectAsState()
+    val errorMessage by viewmodel.errorMessage.collectAsState()
+    val isLoading by viewmodel.isLoading.collectAsState()
 
-    var txtEmail by remember { mutableStateOf("") }
-    var txtPass by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
+    // Navegación de éxito
+    LaunchedEffect(loginSuccess) {
+        if (loginSuccess == true) {
+            onRegisterSuccess()
+            viewmodel.resetLoginSuccess()
+        }
+    }
+
+    // Errores → Snackbar
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            scope.launch { snackbarHostState.showErrorOnce(errorMessage!!) }
+            viewmodel.resetErrorMessage()
+        }
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -53,13 +77,13 @@ fun Register(recordarPantalla: NavHostController, mainActivity: MainActivity){
     ) {
 
         IconButton(
-            onClick = { recordarPantalla.popBackStack() },
+            onClick = { goToLogin() },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(16.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Regresar",
                 tint = Color.Black
             )
@@ -71,7 +95,7 @@ fun Register(recordarPantalla: NavHostController, mainActivity: MainActivity){
                 .padding(horizontal = 30.dp)
                 .padding(top = 80.dp, bottom = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
-        ){
+        ) {
             // Logo
             Image(
                 painter = painterResource(id = R.drawable.logo),
@@ -90,23 +114,23 @@ fun Register(recordarPantalla: NavHostController, mainActivity: MainActivity){
             )
 
             OutlinedTextField(
-                value = txtEmail,
+                value = user.username,
                 modifier = Modifier.padding(vertical = 8.dp),
-                label = { Text(text = "Correo electrónico") },
-                placeholder = { Text(text = "ejemplo@correo.com") },
+                label = { Text(text = "Nombre de usuario") },
+                placeholder = { Text(text = "JameoFit") },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Email,
+                        imageVector = Icons.Default.Person,
                         tint = Color.Gray,
-                        contentDescription = "Icono de correo"
+                        contentDescription = "Icono de usuario"
                     )
                 },
-                onValueChange = { txtEmail = it },
+                onValueChange = { viewmodel.updateUsername(it) },
                 singleLine = true
             )
 
             OutlinedTextField(
-                value = txtPass,
+                value = user.password,
                 modifier = Modifier.padding(vertical = 8.dp),
                 label = { Text(text = "Contraseña") },
                 placeholder = { Text(text = "Mínimo 6 caracteres") },
@@ -117,7 +141,7 @@ fun Register(recordarPantalla: NavHostController, mainActivity: MainActivity){
                         contentDescription = "Icono de contraseña"
                     )
                 },
-                onValueChange = { txtPass = it },
+                onValueChange = { viewmodel.updatePassword(it) },
                 singleLine = true
             )
 
@@ -129,24 +153,7 @@ fun Register(recordarPantalla: NavHostController, mainActivity: MainActivity){
                     .padding(vertical = 16.dp)
                     .height(48.dp),
                 onClick = {
-
-                    if (txtEmail.isNotEmpty() && txtPass.isNotEmpty()) {
-                        if (txtPass.length >= 6) {
-
-                            val editor: SharedPreferences.Editor = pref.edit()
-                            editor.putString("email", txtEmail)
-                            editor.putString("password", txtPass)
-                            editor.putLong("registration_date", System.currentTimeMillis())
-                            editor.apply()
-
-
-                            recordarPantalla.navigate("V4")
-                        } else {
-
-
-                        }
-                    }
-
+                    viewmodel.register()
                 }
             ) {
                 Text(
@@ -157,16 +164,17 @@ fun Register(recordarPantalla: NavHostController, mainActivity: MainActivity){
                 )
             }
 
-
             Text(
                 text = "Al registrarte, aceptas nuestros términos y condiciones",
                 fontSize = 12.sp,
                 color = Color.Gray,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .padding(top = 16.dp )
+                    .padding(top = 16.dp)
                     .padding(horizontal = 20.dp)
             )
         }
+        ErrorSnackbarHost(hostState = snackbarHostState)
+        FullscreenLoader(visible = isLoading)
     }
 }
