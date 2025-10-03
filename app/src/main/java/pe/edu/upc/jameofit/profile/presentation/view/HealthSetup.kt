@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -31,17 +31,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import pe.edu.upc.jameofit.MainActivity
 
 @Composable
-fun HealthSetup(recordarPantalla: NavHostController, mainActivity: MainActivity){
+fun HealthSetup(
+    onNext: () -> Unit,
+    onBack: () -> Unit
+) {
 
-    val pref: SharedPreferences = mainActivity.getSharedPreferences("pref_health_profile", Context.MODE_PRIVATE)
+    val context = LocalContext.current
+    val pref: SharedPreferences = remember {
+        context.getSharedPreferences("pref_health_profile", Context.MODE_PRIVATE)
+    }
     var txtObj by remember { mutableStateOf("") }
     var txtAct by remember { mutableStateOf("") }
 
@@ -66,15 +71,15 @@ fun HealthSetup(recordarPantalla: NavHostController, mainActivity: MainActivity)
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
-    ){
+    ) {
         IconButton(
-            onClick = { recordarPantalla.popBackStack() },
+            onClick = { onBack },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(16.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Regresar",
                 tint = Color.Black
             )
@@ -210,18 +215,13 @@ fun HealthSetup(recordarPantalla: NavHostController, mainActivity: MainActivity)
                     .height(48.dp),
                 onClick = {
                     if (txtObj.trim().isNotEmpty() && txtAct.trim().isNotEmpty()) {
-
-                        val editor: SharedPreferences.Editor = pref.edit()
-
-                        editor.putString("objetivo", txtObj.trim())
-                        editor.putString("nivel_actividad", txtAct.trim())
-                        editor.putLong("health_profile_updated", System.currentTimeMillis())
-                        editor.putBoolean("health_profile_completed", true)
-
-                        editor.apply()
-
-
-                        recordarPantalla.navigate("V6")
+                        pref.edit()
+                            .putString("objetivo", txtObj.trim())
+                            .putString("nivel_actividad", txtAct.trim())
+                            .putLong("health_profile_updated", System.currentTimeMillis())
+                            .putBoolean("health_profile_completed", true)
+                            .apply()
+                        onNext()
                     }
                 }
             ) {
