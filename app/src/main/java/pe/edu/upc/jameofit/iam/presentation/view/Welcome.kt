@@ -25,7 +25,7 @@ import pe.edu.upc.jameofit.R
 
 
 @Composable
-fun Welcome(recordarPantalla: NavHostController){
+fun Welcome(navController: NavHostController){
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -77,7 +77,7 @@ fun Welcome(recordarPantalla: NavHostController){
                     .padding(vertical = 14.dp)
                     .height(48.dp),
                 onClick = {
-                        recordarPantalla.navigate("V3")
+                        navController.navigate("V3")
                 }
             ) {
                 Text(
@@ -103,7 +103,7 @@ fun Welcome(recordarPantalla: NavHostController){
                     .padding(vertical = 14.dp)
                     .height(48.dp),
                 onClick = {
-                    recordarPantalla.navigate("V2")
+                    navController.navigate("V2")
                 }
             ) {
                 Text(
