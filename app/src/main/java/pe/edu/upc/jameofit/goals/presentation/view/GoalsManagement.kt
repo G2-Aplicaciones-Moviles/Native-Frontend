@@ -32,6 +32,7 @@ import pe.edu.upc.jameofit.shared.presentation.components.showErrorOnce
 
 @Composable
 fun GoalsManagement(
+    userId: Long,
     viewmodel: GoalsViewModel,
     onBack: () -> Unit
 ) {
@@ -183,7 +184,7 @@ fun GoalsManagement(
             }
 
             OutlinedButton(
-                onClick = { viewmodel.saveGoalCalories() },
+                onClick = { viewmodel.saveGoalCalories(userId) },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("Guardar configuración de objetivo y calorías") }
 
@@ -244,13 +245,13 @@ fun GoalsManagement(
             )
 
             OutlinedButton(
-                onClick = { viewmodel.saveDietType() },
+                onClick = { viewmodel.saveDietType(userId) },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("Guardar configuración de tipo de dieta") }
 
             // ================== Botón global (opcional) ==================
             Button(
-                onClick = { viewmodel.saveAll() },
+                onClick = { viewmodel.saveAll(userId) },
                 modifier = Modifier
                     .padding(top = 8.dp)
                     .fillMaxWidth(),
