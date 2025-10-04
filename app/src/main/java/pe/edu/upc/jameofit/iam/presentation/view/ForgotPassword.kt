@@ -35,7 +35,7 @@ import pe.edu.upc.jameofit.MainActivity
 
 
 @Composable
-fun ForgotPassword(recordarPantalla: NavHostController, mainActivity: MainActivity){
+fun ForgotPassword(navController: NavHostController, mainActivity: MainActivity){
 
     val prefRegister: SharedPreferences = mainActivity.getSharedPreferences("pref_register", Context.MODE_PRIVATE)
     val registeredEmail: String = prefRegister.getString("email", "")!!
@@ -49,7 +49,7 @@ fun ForgotPassword(recordarPantalla: NavHostController, mainActivity: MainActivi
             .statusBarsPadding()
     ){
         IconButton(
-            onClick = { recordarPantalla.popBackStack() },
+            onClick = { navController.popBackStack() },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(16.dp)
@@ -117,7 +117,7 @@ fun ForgotPassword(recordarPantalla: NavHostController, mainActivity: MainActivi
                     val isValidLogin = (txtRecoveryEmail == registeredEmail)
 
                     if (isValidLogin && txtRecoveryEmail.isNotEmpty()) {
-                        recordarPantalla.navigate("V7")
+                        navController.navigate("V7")
                     }
 
                 }

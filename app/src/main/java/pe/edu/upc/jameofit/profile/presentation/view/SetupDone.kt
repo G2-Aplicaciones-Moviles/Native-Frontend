@@ -14,46 +14,50 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import pe.edu.upc.jameofit.MainActivity
 import pe.edu.upc.jameofit.R
 
-
 @Composable
-fun SetupDone(recordarPantalla: NavHostController,  mainActivity: MainActivity){
+fun SetupDone(onFinish: () -> Unit) {
 
-    val prefProfile: SharedPreferences = mainActivity.getSharedPreferences("pref_profile", Context.MODE_PRIVATE)
-
-
-    val registeredName: String = prefProfile.getString("nombre", "")!!
+    val context = LocalContext.current
+    val prefProfile: SharedPreferences = remember {
+        context.getSharedPreferences("pref_profile", Context.MODE_PRIVATE)
+    }
+    val registeredName = remember {
+        prefProfile.getString("nombre", "") ?: ""
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
-    ){
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 30.dp)
                 .padding(top = 80.dp, bottom = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
-        ){
-            Text(text = "¡Bienvenido $registeredName!",
+        ) {
+            Text(
+                text = "¡Bienvenido $registeredName!",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 30.sp,
                 color = Color.Black,
                 modifier = Modifier.padding(bottom = 7.dp)
             )
 
-            Text(text = "Gracias por completar su información",
+            Text(
+                text = "Gracias por completar su información",
                 fontWeight = FontWeight.Normal,
                 fontSize = 20.sp,
                 color = Color.Black,
@@ -64,11 +68,11 @@ fun SetupDone(recordarPantalla: NavHostController,  mainActivity: MainActivity){
             Image(
                 painter = painterResource(id = R.drawable.logo2),
                 contentDescription = "Icono de la aplicación",
-                modifier = Modifier
-                    .size(280.dp)
+                modifier = Modifier.size(280.dp)
             )
 
-            Text(text = "Ahora puede acceder a la aplicación y descubrir lo que JameoFit tiene para ti.",
+            Text(
+                text = "Ahora puede acceder a la aplicación y descubrir lo que JameoFit tiene para ti.",
                 fontWeight = FontWeight.Normal,
                 fontSize = 20.sp,
                 color = Color.Black,
@@ -83,9 +87,7 @@ fun SetupDone(recordarPantalla: NavHostController,  mainActivity: MainActivity){
                 modifier = Modifier
                     .padding(vertical = 16.dp)
                     .height(48.dp),
-                onClick = {
-                    recordarPantalla.navigate("V7")
-                }
+                onClick = onFinish
             ) {
                 Text(
                     text = "Continuar",
@@ -95,5 +97,4 @@ fun SetupDone(recordarPantalla: NavHostController,  mainActivity: MainActivity){
             }
         }
     }
-
 }
