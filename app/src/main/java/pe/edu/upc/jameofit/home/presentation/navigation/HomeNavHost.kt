@@ -15,7 +15,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun HomeNavHost(
-    navController: NavHostController
+    navController: NavHostController,
+    onRequestLogout: () -> Unit = {}
 ) {
     val currentRoute = navController.currentBackStackEntryAsState().value
         ?.destination?.route ?: HomeRoute.TRACKING
@@ -25,8 +26,9 @@ fun HomeNavHost(
             HomeRoute.TRACKING -> "bottom_tracking"
             HomeRoute.TIPS -> "bottom_tips"
             HomeRoute.MESSAGES -> "bottom_messages"
-            HomeRoute.PROFILE -> "bottom_profile"
             HomeRoute.NUTRITIONISTS -> "bottom_nutritionists"
+            DrawerRoute.PROFILE -> DrawerRoute.PROFILE
+            DrawerRoute.SETTINGS -> DrawerRoute.SETTINGS
             else -> "bottom_tracking"
         },
         onNavigateBottom = { key ->
@@ -34,7 +36,6 @@ fun HomeNavHost(
                 "bottom_tracking" -> HomeRoute.TRACKING
                 "bottom_tips" -> HomeRoute.TIPS
                 "bottom_messages" -> HomeRoute.MESSAGES
-                "bottom_profile" -> HomeRoute.PROFILE
                 "bottom_nutritionists" -> HomeRoute.NUTRITIONISTS
                 else -> HomeRoute.TRACKING
             }
@@ -44,7 +45,17 @@ fun HomeNavHost(
                 popUpTo(HomeRoute.TRACKING) { saveState = true }
             }
         },
-        onNavigateDrawer = { /* TODO: mapear cuando existan destinos del drawer */ },
+        onNavigateDrawer = { key ->
+            val dest = when (key) {
+                DrawerRoute.PROFILE -> DrawerRoute.PROFILE
+                DrawerRoute.SETTINGS -> DrawerRoute.SETTINGS
+                else -> DrawerRoute.PROFILE
+            }
+            navController.navigate(dest) {
+                launchSingleTop = true
+            }
+        },
+        onRequestLogout = onRequestLogout,
         topTitle = "Inicio"
     ) { paddingModifier ->
         NavHost(
@@ -67,9 +78,9 @@ fun HomeNavHost(
             }
             composable(HomeRoute.TIPS) { PlaceholderScreen("Tips saludables") }
             composable(HomeRoute.MESSAGES) { PlaceholderScreen("Mensajes") }
-            composable(HomeRoute.PROFILE) { PlaceholderScreen("Perfil") }
             composable(HomeRoute.NUTRITIONISTS) { PlaceholderScreen("Nutricionistas") }
-
+            composable(DrawerRoute.PROFILE) { PlaceholderScreen("Perfil") }
+            composable(DrawerRoute.SETTINGS) { PlaceholderScreen("Ajustes") }
             composable(TrackingRoute.MEAL_ACTIVITY) {
                 PlaceholderScreen("Actividad reciente")
             }
