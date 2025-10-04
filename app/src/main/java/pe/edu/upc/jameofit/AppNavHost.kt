@@ -120,7 +120,16 @@ fun AppNavHost() {
         // 4) Main graph
         navigation(startDestination = "home", route = Graph.Main.route) {
             composable("home") {
-                HomeNavHost(navController = rememberNavController())
+                HomeNavHost(
+                    navController = rememberNavController(),
+                    onRequestLogout = {
+                        JwtStorage.clearToken()
+                        nav.navigate(Graph.Auth.route) {
+                            popUpTo(Graph.Main.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
         }
     }
