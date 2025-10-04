@@ -58,12 +58,13 @@ import pe.edu.upc.jameofit.ui.theme.JameoGreen
 fun Login(
     viewmodel: AuthViewModel,
     goToRegister: () -> Unit,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (Long) -> Unit,
     goToForgotPassword: () -> Unit
 ) {
 
     val user by viewmodel.user.collectAsState()
     val loginSuccess by viewmodel.loginSuccess.collectAsState()
+    val currentUserId by viewmodel.currentUserId.collectAsState()
     val errorMessage by viewmodel.errorMessage.collectAsState()
     val isLoading by viewmodel.isLoading.collectAsState()
 
@@ -76,7 +77,7 @@ fun Login(
     // Navegación de éxito
     LaunchedEffect(loginSuccess) {
         if (loginSuccess == true) {
-            onLoginSuccess()
+            onLoginSuccess(currentUserId!!)
             viewmodel.resetLoginSuccess()
         }
     }

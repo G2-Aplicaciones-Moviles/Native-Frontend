@@ -24,6 +24,9 @@ class AuthViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val _currentUserId = MutableStateFlow<Long?>(null)
+
+    val currentUserId: StateFlow<Long?> = _currentUserId
     fun updateUsername(username: String) {
         _user.value = _user.value.copy(username = username)
     }
@@ -52,12 +55,24 @@ class AuthViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                _loginSuccess.value = authRepository.login(_user.value)
-                if (_loginSuccess.value != true) {
+                val ok = authRepository.login(_user.value)
+                _loginSuccess.value = ok
+                if (!ok) {
                     _errorMessage.value = "Nombre de usuario o contraseña incorrectos."
+                } else {
+                    // ✅ Obtener userId desde el JWT
+                    val uid = authRepository.currentUserId()
+                    if (uid == null) {
+                        _errorMessage.value = "No se pudo obtener el ID de usuario."
+                        _loginSuccess.value = false
+                    } else {
+                        _currentUserId.value = uid
+                    }
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Error de autenticación: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -66,6 +81,8 @@ class AuthViewModel(
         viewModelScope.launch {
             authRepository.logout()
             clearUser()
+            _currentUserId.value = null
+            _loginSuccess.value = null
         }
     }
 
@@ -86,10 +103,27 @@ class AuthViewModel(
             _isLoading.value = true
             try {
                 val ok = authRepository.register(_user.value)
-                _loginSuccess.value = ok
-                if (!ok) _errorMessage.value = "No se pudo registrar."
+                if (!ok) {
+                    _loginSuccess.value = false
+                    _errorMessage.value = "No se pudo registrar."
+                    return@launch
+                }
+
+                val uid = authRepository.currentUserId()
+                if (uid == null) {
+                    _errorMessage.value = "No se pudo obtener el ID de usuario."
+                    _loginSuccess.value = false
+                    return@launch
+                }
+
+                _currentUserId.value = uid
+                _loginSuccess.value = true   // <- solo aquí, cuando todo salió OK
+                // opcional: _errorMessage.value = null
             } catch (e: Exception) {
+                _loginSuccess.value = false
                 _errorMessage.value = "Error de registro: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }

@@ -67,7 +67,7 @@ class GoalsViewModel(
     }
 
     // --------- Acciones (guardar) ---------
-    fun saveGoalCalories() {
+    fun saveGoalCalories(userId: Long) {
         val weight = _targetWeightText.value.toDoubleOrNull()
         if (weight == null || weight <= 0.0) {
             _errorMessage.value = "Ingresa un peso objetivo válido"
@@ -79,7 +79,8 @@ class GoalsViewModel(
             _isLoading.value = true
             try {
                 val ok = goalsRepository.saveGoalCalories(
-                    GoalCalorieConfig(
+                    userId = userId,
+                    config = GoalCalorieConfig(
                         objective = _objective.value,
                         targetWeightKg = weight,
                         pace = _pace.value
@@ -96,11 +97,14 @@ class GoalsViewModel(
         }
     }
 
-    fun saveDietType() {
+    fun saveDietType(userId: Long) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val ok = goalsRepository.saveDietType(_dietPreset.value)
+                val ok = goalsRepository.saveDietType(
+                    userId = userId,
+                    preset = _dietPreset.value
+                )
                 _dietSaveSuccess.value = ok
                 if (!ok) _errorMessage.value = "No se pudo actualizar el tipo de dieta."
             } catch (e: Exception) {
@@ -112,8 +116,7 @@ class GoalsViewModel(
         }
     }
 
-    fun saveAll() {
-        // Guarda ambas secciones una detrás de otra
+    fun saveAll(userId: Long) {
         val weight = _targetWeightText.value.toDoubleOrNull()
         if (weight == null || weight <= 0.0) {
             _errorMessage.value = "Ingresa un peso objetivo válido"
@@ -125,7 +128,8 @@ class GoalsViewModel(
             _isLoading.value = true
             try {
                 val ok1 = goalsRepository.saveGoalCalories(
-                    GoalCalorieConfig(
+                    userId = userId,
+                    config = GoalCalorieConfig(
                         objective = _objective.value,
                         targetWeightKg = weight,
                         pace = _pace.value
@@ -134,7 +138,10 @@ class GoalsViewModel(
                 _goalSaveSuccess.value = ok1
                 if (!ok1) _errorMessage.value = "No se pudo guardar objetivo y calorías."
 
-                val ok2 = goalsRepository.saveDietType(_dietPreset.value)
+                val ok2 = goalsRepository.saveDietType(
+                    userId = userId,
+                    preset = _dietPreset.value
+                )
                 _dietSaveSuccess.value = ok2
                 if (!ok2) _errorMessage.value = "No se pudo actualizar el tipo de dieta."
             } catch (e: Exception) {
@@ -146,6 +153,7 @@ class GoalsViewModel(
             }
         }
     }
+
 
     // --------- Utilitarios de UI ---------
     fun resetGoalSaveSuccess() { _goalSaveSuccess.value = null }
