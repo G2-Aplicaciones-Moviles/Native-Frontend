@@ -60,6 +60,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // Dependencies
+    implementation(libs.androidx.appcompat)
+    implementation(libs.google.material)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.androidx.room.runtime)
