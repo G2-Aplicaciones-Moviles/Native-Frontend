@@ -31,24 +31,42 @@ fun AppNavHost() {
             GateScreen(
                 goToAuth = {
                     nav.navigate(Graph.Auth.route) {
-                        popUpTo(0) { inclusive = true }
+                        popUpTo(nav.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
                 goToOnboarding = {
                     nav.navigate(Graph.Onboarding.route) {
-                        popUpTo(0) { inclusive = true }
+                        popUpTo(nav.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
                 goToMain = {
                     nav.navigate(Graph.Main.route) {
-                        popUpTo(0) { inclusive = true }
+                        popUpTo(nav.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
         }
 
         // 2) Auth graph
-        navigation(startDestination = "register", route = Graph.Auth.route) {
+        navigation(startDestination = "login", route = Graph.Auth.route) {
+            composable("login") {
+                val vm = PresentationModule.getAuthViewModel()
+                Login(
+                    viewmodel = vm,
+                    goToRegister = { nav.navigate("register") },
+                    onLoginSuccess = {
+                        nav.navigate(Graph.Onboarding.route) {
+                            popUpTo(nav.graph.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    goToForgotPassword = { nav.navigate("forgot_password") }
+                )
+            }
+
             composable("register") {
                 val vm = PresentationModule.getAuthViewModel()
                 Register(
@@ -65,21 +83,6 @@ fun AppNavHost() {
                             launchSingleTop = true
                         }
                     }
-                )
-            }
-
-            composable("login") {
-                val vm = PresentationModule.getAuthViewModel()
-                Login(
-                    viewmodel = vm,
-                    goToRegister = { nav.navigate("register") },
-                    onLoginSuccess = {
-                        nav.navigate(Graph.Onboarding.route) {
-                            popUpTo(nav.graph.id) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    },
-                    goToForgotPassword = { nav.navigate("forgot_password") }
                 )
             }
 
@@ -117,14 +120,13 @@ fun AppNavHost() {
         // 4) Main graph
         navigation(startDestination = "home", route = Graph.Main.route) {
             composable("home") {
-                // Tu Navigation interna para features (home/goals/profile/…)
                 Navigation(
-//                    goToLogin = {
-//                        nav.navigate(Graph.Auth.route) {
-//                            popUpTo(0) { inclusive = true }
-//                            launchSingleTop = true
-//                        }
-//                    }
+                    goToLogin = {
+                        nav.navigate(Graph.Auth.route) {
+                            popUpTo(nav.graph.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
         }
