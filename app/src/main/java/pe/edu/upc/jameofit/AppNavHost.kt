@@ -8,7 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
-import pe.edu.upc.jameofit.home.presentation.navigation.Navigation
+import pe.edu.upc.jameofit.home.presentation.navigation.HomeNavHost
 import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule
 import pe.edu.upc.jameofit.iam.presentation.view.Login
 import pe.edu.upc.jameofit.iam.presentation.view.Register
@@ -120,14 +120,7 @@ fun AppNavHost() {
         // 4) Main graph
         navigation(startDestination = "home", route = Graph.Main.route) {
             composable("home") {
-                Navigation(
-                    goToLogin = {
-                        nav.navigate(Graph.Auth.route) {
-                            popUpTo(nav.graph.id) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
-                )
+                HomeNavHost(navController = rememberNavController())
             }
         }
     }
