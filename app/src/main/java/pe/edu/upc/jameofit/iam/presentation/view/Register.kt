@@ -1,21 +1,22 @@
 package pe.edu.upc.jameofit.iam.presentation.view
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -31,14 +32,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.R
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.shared.presentation.components.ErrorSnackbarHost
-import pe.edu.upc.jameofit.shared.presentation.components.FullscreenLoader
 import pe.edu.upc.jameofit.shared.presentation.components.showErrorOnce
+import pe.edu.upc.jameofit.ui.theme.JameoBlue
 
 @Composable
 fun Register(
@@ -50,7 +52,6 @@ fun Register(
     val user by viewmodel.user.collectAsState()
     val loginSuccess by viewmodel.loginSuccess.collectAsState()
     val errorMessage by viewmodel.errorMessage.collectAsState()
-    val isLoading by viewmodel.isLoading.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -75,19 +76,6 @@ fun Register(
             .fillMaxSize()
             .statusBarsPadding()
     ) {
-
-        IconButton(
-            onClick = { goToLogin() },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Regresar",
-                tint = Color.Black
-            )
-        }
 
         Column(
             modifier = Modifier
@@ -173,8 +161,20 @@ fun Register(
                     .padding(top = 16.dp)
                     .padding(horizontal = 20.dp)
             )
+
+            Spacer(Modifier.height(24.dp))
+
+            Row {
+                Text("¿Ya tienes una cuenta? ")
+                Text(
+                    text = "Inicia sesión",
+                    color = JameoBlue,
+                    fontWeight = FontWeight.SemiBold,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { goToLogin() }
+                )
+            }
         }
         ErrorSnackbarHost(hostState = snackbarHostState)
-        FullscreenLoader(visible = isLoading)
     }
 }

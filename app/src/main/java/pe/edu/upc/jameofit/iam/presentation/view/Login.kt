@@ -2,7 +2,6 @@ package pe.edu.upc.jameofit.iam.presentation.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
@@ -21,7 +19,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
@@ -48,7 +45,6 @@ import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.R
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.shared.presentation.components.ErrorSnackbarHost
-import pe.edu.upc.jameofit.shared.presentation.components.FullscreenLoader
 import pe.edu.upc.jameofit.shared.presentation.components.showErrorOnce
 import pe.edu.upc.jameofit.ui.theme.JameoBlue
 import pe.edu.upc.jameofit.ui.theme.JameoGreen
@@ -66,7 +62,6 @@ fun Login(
     val loginSuccess by viewmodel.loginSuccess.collectAsState()
     val currentUserId by viewmodel.currentUserId.collectAsState()
     val errorMessage by viewmodel.errorMessage.collectAsState()
-    val isLoading by viewmodel.isLoading.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -95,25 +90,11 @@ fun Login(
             .fillMaxSize()
             .statusBarsPadding()
     ) {
-        IconButton(
-            onClick = { goToRegister() },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Regresar",
-                tint = Color.Black
-            )
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 30.dp)
                 .padding(top = 80.dp, bottom = 30.dp),
-            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -234,17 +215,28 @@ fun Login(
 
             Text(
                 text = "Olvidé mi contraseña",
-                color = MaterialTheme.colorScheme.error,     // rojo del tema; o usa Color(0xFFD32F2F)
+                color = MaterialTheme.colorScheme.error,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                textDecoration = TextDecoration.Underline,   // opcional para que parezca link
+                textDecoration = TextDecoration.Underline,
                 modifier = Modifier
                     .padding(top = 4.dp)
                     .clickable { goToForgotPassword() }
             )
+
+            Spacer(Modifier.height(24.dp))
+
+            Row {
+                Text("¿No tienes cuenta aún? ")
+                Text(
+                    text = "Regístrate",
+                    color = JameoBlue,
+                    fontWeight = FontWeight.SemiBold,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { goToRegister() }
+                )
+            }
         }
-        // Snackbar + Loader
         ErrorSnackbarHost(hostState = snackbarHostState)
-        FullscreenLoader(visible = isLoading)
     }
 }
