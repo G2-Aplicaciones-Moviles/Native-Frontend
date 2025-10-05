@@ -14,10 +14,6 @@ class AuthViewModel(
     private val _user = MutableStateFlow(User())
     val user: StateFlow<User> = _user
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
-
-
     private val _loginSuccess = MutableStateFlow<Boolean?>(null)
     val loginSuccess: StateFlow<Boolean?> = _loginSuccess
 
@@ -50,7 +46,6 @@ class AuthViewModel(
         }
 
         viewModelScope.launch {
-            _isLoading.value = true
             try {
                 _loginSuccess.value = authRepository.login(_user.value)
                 if (_loginSuccess.value != true) {
@@ -83,7 +78,6 @@ class AuthViewModel(
         }
 
         viewModelScope.launch {
-            _isLoading.value = true
             try {
                 val ok = authRepository.register(_user.value)
                 _loginSuccess.value = ok
