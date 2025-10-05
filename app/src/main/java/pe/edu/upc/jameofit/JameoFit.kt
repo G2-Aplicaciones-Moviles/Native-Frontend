@@ -2,6 +2,7 @@ package pe.edu.upc.jameofit
 
 import android.app.Application
 import pe.edu.upc.jameofit.shared.data.local.JwtStorage
+import pe.edu.upc.jameofit.shared.data.local.UserSessionStorage
 
 class JameoFit : Application() {
     companion object {
@@ -13,5 +14,6 @@ class JameoFit : Application() {
         super.onCreate()
         instance = this
         JwtStorage.init(applicationContext)
+        UserSessionStorage.init(applicationContext)
     }
 }

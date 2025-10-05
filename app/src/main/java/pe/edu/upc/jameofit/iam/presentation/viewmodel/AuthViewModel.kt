@@ -21,8 +21,8 @@ class AuthViewModel(
     val errorMessage: StateFlow<String?> = _errorMessage
 
     private val _currentUserId = MutableStateFlow<Long?>(null)
-
     val currentUserId: StateFlow<Long?> = _currentUserId
+
     fun updateUsername(username: String) {
         _user.value = _user.value.copy(username = username)
     }
@@ -55,19 +55,17 @@ class AuthViewModel(
                 if (!ok) {
                     _errorMessage.value = "Nombre de usuario o contraseña incorrectos."
                 } else {
-                    // ✅ Obtener userId desde el JWT
                     val uid = authRepository.currentUserId()
                     if (uid == null) {
-                        _errorMessage.value = "No se pudo obtener el ID de usuario."
-                        _loginSuccess.value = false
+                        _errorMessage.value =
+                            "Sesión iniciada, pero no se pudo leer el ID de usuario del token."
                     } else {
                         _currentUserId.value = uid
                     }
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Error de autenticación: ${e.message}"
-            } finally {
-                _isLoading.value = false
+                _loginSuccess.value = false
             }
         }
     }
@@ -104,20 +102,12 @@ class AuthViewModel(
                 }
 
                 val uid = authRepository.currentUserId()
-                if (uid == null) {
-                    _errorMessage.value = "No se pudo obtener el ID de usuario."
-                    _loginSuccess.value = false
-                    return@launch
-                }
+                if (uid != null) _currentUserId.value = uid
 
-                _currentUserId.value = uid
-                _loginSuccess.value = true   // <- solo aquí, cuando todo salió OK
-                // opcional: _errorMessage.value = null
+                _loginSuccess.value = true
             } catch (e: Exception) {
                 _loginSuccess.value = false
                 _errorMessage.value = "Error de registro: ${e.message}"
-            } finally {
-                _isLoading.value = false
             }
         }
     }
@@ -129,4 +119,22 @@ class AuthViewModel(
     fun resetErrorMessage() {
         _errorMessage.value = null
     }
+
+    init {
+        viewModelScope.launch {
+            val uid = authRepository.currentUserId()
+            if (uid != null) _currentUserId.value = uid
+        }
+    }
+
+    fun resolveUserIdFromToken() {
+        viewModelScope.launch {
+            val uid = authRepository.currentUserId()
+            _currentUserId.value = uid
+            if (uid == null) {
+                _errorMessage.value = "No se pudo obtener el ID de usuario del token."
+            }
+        }
+    }
+
 }
