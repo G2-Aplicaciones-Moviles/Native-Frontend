@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
+import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
 
 @Composable
 fun HomeNavHost(
@@ -78,7 +79,7 @@ fun HomeNavHost(
             }
             composable(HomeRoute.TIPS) { PlaceholderScreen("Tips saludables") }
             composable(HomeRoute.MESSAGES) { PlaceholderScreen("Mensajes") }
-            composable(HomeRoute.NUTRITIONISTS) { PlaceholderScreen("Nutricionistas") }
+            composable(HomeRoute.NUTRITIONISTS) { NutritionistsScreen() }
             composable(DrawerRoute.PROFILE) { PlaceholderScreen("Perfil") }
             composable(DrawerRoute.SETTINGS) { PlaceholderScreen("Ajustes") }
             composable(TrackingRoute.MEAL_ACTIVITY) {
