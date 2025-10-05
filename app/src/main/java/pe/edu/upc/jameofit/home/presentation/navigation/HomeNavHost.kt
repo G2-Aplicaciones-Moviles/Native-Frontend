@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import pe.edu.upc.jameofit.goals.presentation.view.GoalsManagementRoute
 import pe.edu.upc.jameofit.goals.presentation.di.PresentationModule as GoalsPresentationModule
 import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule as IamPresentationModule
+import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
 
 @Composable
 fun HomeNavHost(
@@ -83,7 +84,7 @@ fun HomeNavHost(
             }
             composable(HomeRoute.TIPS) { PlaceholderScreen("Tips saludables") }
             composable(HomeRoute.MESSAGES) { PlaceholderScreen("Mensajes") }
-            composable(HomeRoute.NUTRITIONISTS) { PlaceholderScreen("Nutricionistas") }
+            composable(HomeRoute.NUTRITIONISTS) { NutritionistsScreen() }
             composable(DrawerRoute.PROFILE) { PlaceholderScreen("Perfil") }
             composable(DrawerRoute.GOALS) {
 
