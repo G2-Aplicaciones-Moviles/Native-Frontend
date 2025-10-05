@@ -15,11 +15,11 @@ import pe.edu.upc.jameofit.iam.presentation.view.Login
 import pe.edu.upc.jameofit.iam.presentation.view.Register
 import pe.edu.upc.jameofit.iam.presentation.view.Welcome
 import pe.edu.upc.jameofit.navigation.AuthRoute
+import pe.edu.upc.jameofit.navigation.Graph
 import pe.edu.upc.jameofit.profile.presentation.view.HealthSetup
 import pe.edu.upc.jameofit.profile.presentation.view.ProfileSetup
 import pe.edu.upc.jameofit.profile.presentation.view.SetupDone
 import pe.edu.upc.jameofit.shared.data.local.JwtStorage
-import pe.edu.upc.jameofit.navigation.Graph
 import androidx.core.content.edit
 
 private const val PREF_AUTH = "pref_auth"

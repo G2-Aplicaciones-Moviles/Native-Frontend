@@ -10,18 +10,18 @@ import retrofit2.http.PUT
 import retrofit2.http.Query
 
 interface GoalsService {
-    @PUT("api/v1/goals/calories")
+    @PUT("goals/calories")
     suspend fun saveGoalCalories(
         @Query("userId") userId: Long,
         @Body body: GoalCalorieConfigRequest
     ): Response<GoalResponse>
 
-    @PUT("api/v1/goals/diet-type")
+    @PUT("goals/diet-type")
     suspend fun saveDietType(
         @Query("userId") userId: Long,
         @Body body: DietTypeConfigRequest
     ): Response<GoalResponse>
 
-    @GET("api/v1/goals")
+    @GET("goals")
     suspend fun getGoal(@Query("userId") userId: Long): Response<GoalResponse>
 }

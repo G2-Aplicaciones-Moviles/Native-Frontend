@@ -12,6 +12,9 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
+import pe.edu.upc.jameofit.goals.presentation.view.GoalsManagementRoute
+import pe.edu.upc.jameofit.goals.presentation.di.PresentationModule as GoalsPresentationModule
+import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule as IamPresentationModule
 import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
 
 @Composable
@@ -29,6 +32,7 @@ fun HomeNavHost(
             HomeRoute.MESSAGES -> "bottom_messages"
             HomeRoute.NUTRITIONISTS -> "bottom_nutritionists"
             DrawerRoute.PROFILE -> DrawerRoute.PROFILE
+            DrawerRoute.GOALS -> DrawerRoute.GOALS
             DrawerRoute.SETTINGS -> DrawerRoute.SETTINGS
             else -> "bottom_tracking"
         },
@@ -49,6 +53,7 @@ fun HomeNavHost(
         onNavigateDrawer = { key ->
             val dest = when (key) {
                 DrawerRoute.PROFILE -> DrawerRoute.PROFILE
+                DrawerRoute.GOALS -> DrawerRoute.GOALS
                 DrawerRoute.SETTINGS -> DrawerRoute.SETTINGS
                 else -> DrawerRoute.PROFILE
             }
@@ -81,6 +86,16 @@ fun HomeNavHost(
             composable(HomeRoute.MESSAGES) { PlaceholderScreen("Mensajes") }
             composable(HomeRoute.NUTRITIONISTS) { NutritionistsScreen() }
             composable(DrawerRoute.PROFILE) { PlaceholderScreen("Perfil") }
+            composable(DrawerRoute.GOALS) {
+
+                val authVm = IamPresentationModule.getAuthViewModel()
+                val goalsVm = GoalsPresentationModule.getGoalsViewModel()
+                GoalsManagementRoute(
+                    authViewModel = authVm,
+                    goalsViewModel = goalsVm,
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable(DrawerRoute.SETTINGS) { PlaceholderScreen("Ajustes") }
             composable(TrackingRoute.MEAL_ACTIVITY) {
                 PlaceholderScreen("Actividad reciente")
