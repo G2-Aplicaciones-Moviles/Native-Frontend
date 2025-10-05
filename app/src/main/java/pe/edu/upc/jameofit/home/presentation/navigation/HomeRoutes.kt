@@ -23,4 +23,6 @@ object TrackingRoute {
 object DrawerRoute {
     const val PROFILE = "drawer_profile"
     const val SETTINGS = "drawer_settings"
+
+    const val GOALS = "drawer_goals"
 }

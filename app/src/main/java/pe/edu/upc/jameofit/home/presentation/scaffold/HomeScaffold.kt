@@ -62,6 +62,15 @@ fun HomeScaffold(
                     icon = { Icon(Icons.Default.Person, contentDescription = null) }
                 )
                 NavigationDrawerItem(
+                    label = { Text("Objetivos") },
+                    selected = currentDestination == "drawer_goals",
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateDrawer("drawer_goals")
+                    },
+                    icon = { Icon(painterResource(id = R.drawable.heart_check_24px), contentDescription = null) }
+                )
+                NavigationDrawerItem(
                     label = { Text("Ajustes") },
                     selected = currentDestination == "drawer_settings",
                     onClick = {
