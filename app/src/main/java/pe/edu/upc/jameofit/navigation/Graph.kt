@@ -14,9 +14,3 @@ object AuthRoute {
     const val REGISTER = "register"
     const val FORGOT = "forgot_password"
 }
-
-object NutritionistRoute {
-    const val LIST = "home/nutritionists"
-    const val DETAIL = "home/nutritionists/{nutritionistId}"
-    fun detail(nutritionistId: String) = "home/nutritionists/$nutritionistId"
-}
