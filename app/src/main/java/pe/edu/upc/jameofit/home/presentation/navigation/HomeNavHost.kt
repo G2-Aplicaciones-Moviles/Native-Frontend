@@ -18,10 +18,9 @@ import pe.edu.upc.jameofit.goals.presentation.view.GoalsManagementRoute
 import pe.edu.upc.jameofit.goals.presentation.di.PresentationModule as GoalsPresentationModule
 import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule as IamPresentationModule
 import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
+import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanScreen
+import pe.edu.upc.jameofit.recipedetail.presentation.view.BreakfastRecipeDetailScreen
 
-/**
- * Derives a human-readable top bar title for a given destination [route].
- */
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
     route.startsWith("tips") -> "Tips"
@@ -31,16 +30,13 @@ private fun titleForRoute(route: String) = when {
     route == DrawerRoute.GOALS -> "Gestionar objetivos"
     route == DrawerRoute.PROGRESS -> "Analíticas y estadísticas"
     route == DrawerRoute.MEAL_PLANS -> "Planes de alimentación"
+    route == RecipeRoute.BREAKFAST -> "Detalle de desayuno"
     route == DrawerRoute.SUBSCRIPTIONS -> "Suscripciones"
     route == DrawerRoute.FAQ -> "Preguntas frecuentes"
     route == DrawerRoute.SETTINGS -> "Ajustes"
     else -> "Inicio"
 }
 
-/**
- * Maps a leaf [route] to its owning tab ([TabGraph]) based on a stable prefix.
- * Returns null if the route does not belong to any tab (e.g., drawer destinations).
- */
 private fun toTabOf(route: String?): String? = when {
     route == null -> null
     route.startsWith("tracking/") || route == HomeRoute.TRACKING -> TabGraph.TRACKING
@@ -50,15 +46,6 @@ private fun toTabOf(route: String?): String? = when {
     else -> null
 }
 
-/**
- * Internal NavHost for the authenticated area. It:
- * - Sets up a subgraph per bottom tab to keep independent back stacks.
- * - Hosts drawer destinations outside of tab graphs to avoid stack contamination.
- * - Wires [HomeScaffold] with selection state and navigation callbacks.
- *
- * The BottomBar navigation always targets the *root leaf* of a tab (see [HomeRoute]),
- * and performs a `popUpTo(HomeGraph.ROUTE)` with `saveState`/`restoreState` to preserve tab stacks.
- */
 @Composable
 fun HomeNavHost(
     navController: NavHostController,
@@ -76,7 +63,8 @@ fun HomeNavHost(
         DrawerRoute.MEAL_PLANS,
         DrawerRoute.SUBSCRIPTIONS,
         DrawerRoute.FAQ,
-        DrawerRoute.SETTINGS -> currentRoute
+        DrawerRoute.SETTINGS,
+        RecipeRoute.BREAKFAST -> currentRoute
 
         else -> TabGraph.TRACKING
     }
@@ -99,8 +87,8 @@ fun HomeNavHost(
                 DrawerRoute.MEAL_PLANS,
                 DrawerRoute.SUBSCRIPTIONS,
                 DrawerRoute.FAQ,
-                DrawerRoute.SETTINGS -> true
-
+                DrawerRoute.SETTINGS,
+                RecipeRoute.BREAKFAST -> true
                 else -> false
             }
             if (isDrawer) {
@@ -167,6 +155,7 @@ fun HomeNavHost(
                 composable(HomeRoute.NUTRITIONISTS) { NutritionistsScreen() }
             }
 
+            // Drawer destinations
             composable(DrawerRoute.PROFILE) { PlaceholderScreen("Perfil") }
             composable(DrawerRoute.GOALS) {
                 val authVm = IamPresentationModule.getAuthViewModel()
@@ -178,19 +167,22 @@ fun HomeNavHost(
                 )
             }
             composable(DrawerRoute.PROGRESS) { PlaceholderScreen("Analíticas y estadísticas") }
-            composable(DrawerRoute.MEAL_PLANS) { PlaceholderScreen("Planes de alimentación") }
+
+            // Aquí pasamos el navController a MealPlanScreen
+            composable(DrawerRoute.MEAL_PLANS) { MealPlanScreen(navController = navController) }
+
             composable(DrawerRoute.SUBSCRIPTIONS) { PlaceholderScreen("Suscripciones") }
             composable(DrawerRoute.FAQ) { FaqScreen() }
             composable(DrawerRoute.SETTINGS) { PlaceholderScreen("Ajustes") }
+
+            // RUTAS DE RECETAS (registradas con los mismos strings que usas en MealPlanScreen)
+            composable(RecipeRoute.BREAKFAST) { BreakfastRecipeDetailScreen() }
+            composable(RecipeRoute.LUNCH) { PlaceholderScreen("Almuerzo") }
+            composable(RecipeRoute.DINNER) { PlaceholderScreen("Cena") }
         }
     }
 }
 
-/**
- * Minimal placeholder screen used for stubbing destinations during development.
- *
- * @param title Text displayed in the body.
- */
 @Composable
 private fun PlaceholderScreen(title: String) {
     Text(

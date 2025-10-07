@@ -40,6 +40,12 @@ object TrackingRoute {
     const val TIP_DETAIL = "tracking/tip_detail"
 }
 
+object RecipeRoute {
+    const val BREAKFAST = "recipe/breakfast"
+    const val LUNCH = "recipe/lunch"
+    const val DINNER = "recipe/dinner"
+}
+
 /**
  * Drawer-only destinations that sit outside of the tab graphs.
  */
