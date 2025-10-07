@@ -29,6 +29,8 @@ import pe.edu.upc.jameofit.goals.presentation.viewmodel.GoalsViewModel
 import pe.edu.upc.jameofit.shared.presentation.components.ErrorSnackbarHost
 import pe.edu.upc.jameofit.shared.presentation.components.FullscreenLoader
 import pe.edu.upc.jameofit.shared.presentation.components.showErrorOnce
+import pe.edu.upc.jameofit.ui.theme.JameoBlue
+import pe.edu.upc.jameofit.ui.theme.JameoGreen
 
 @Composable
 fun GoalsManagement(
@@ -103,8 +105,8 @@ fun GoalsManagement(
                 )
             }
 
-            // ================== Sección 1: Objetivo y calorías ==================
-            SectionTitle("Objetivo y calorías")
+            // ================== Sección 1: Objetivo y ritmo de progreso ==================
+            SectionTitle("Objetivo y ritmo de progreso")
 
             // Objetivo
             var objExpanded by remember { mutableStateOf(false) }
@@ -126,7 +128,15 @@ fun GoalsManagement(
                     onValueChange = {},
                     label = { Text("Objetivo") },
                     trailingIcon = { TrailingIcon(objExpanded) },
-                    singleLine = true
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFFF0F0F0),
+                        unfocusedContainerColor = Color(0xFFF0F0F0),
+                        focusedIndicatorColor = JameoGreen,
+                        unfocusedIndicatorColor = JameoGreen,
+                        focusedLabelColor = JameoGreen,
+                        unfocusedLabelColor = Color.Gray
+                    )
                 )
                 ExposedDropdownMenu(expanded = objExpanded, onDismissRequest = { objExpanded = false }) {
                     objectiveOptions.forEach { (label, value) ->
@@ -147,6 +157,14 @@ fun GoalsManagement(
                 label = { Text("Peso objetivo (kg)") },
                 isError = targetWeightError,
                 singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFFF0F0F0),
+                    unfocusedContainerColor = Color(0xFFF0F0F0),
+                    focusedIndicatorColor = JameoGreen,
+                    unfocusedIndicatorColor = JameoGreen,
+                    focusedLabelColor = JameoGreen,
+                    unfocusedLabelColor = Color.Gray
+                ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next)
             )
             if (targetWeightError) Assistive("Ingresa un peso válido mayor a 0 kg")
@@ -171,7 +189,15 @@ fun GoalsManagement(
                     onValueChange = {},
                     label = { Text("Ritmo de progreso") },
                     trailingIcon = { TrailingIcon(paceExpanded) },
-                    singleLine = true
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFFF0F0F0),
+                        unfocusedContainerColor = Color(0xFFF0F0F0),
+                        focusedIndicatorColor = JameoGreen,
+                        unfocusedIndicatorColor = JameoGreen,
+                        focusedLabelColor = JameoGreen,
+                        unfocusedLabelColor = Color.Gray
+                    )
                 )
                 ExposedDropdownMenu(expanded = paceExpanded, onDismissRequest = { paceExpanded = false }) {
                     paceOptions.forEach { (label, value) ->
@@ -183,10 +209,14 @@ fun GoalsManagement(
                 }
             }
 
-            OutlinedButton(
+            Button(
                 onClick = { viewmodel.saveGoalCalories(userId) },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text("Guardar configuración de objetivo y calorías") }
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = JameoBlue,
+                    contentColor = Color.White
+                )
+            ) { Text("Guardar configuración de objetivo y ritmo") }
 
             // ================== Sección 2: Tipo de dieta ==================
             SectionTitle("Tipo de dieta")
@@ -213,7 +243,15 @@ fun GoalsManagement(
                     onValueChange = {},
                     label = { Text("Selecciona el tipo de dieta") },
                     trailingIcon = { TrailingIcon(dietExpanded) },
-                    singleLine = true
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFFF0F0F0),
+                        unfocusedContainerColor = Color(0xFFF0F0F0),
+                        focusedIndicatorColor = JameoGreen,
+                        unfocusedIndicatorColor = JameoGreen,
+                        focusedLabelColor = JameoGreen,
+                        unfocusedLabelColor = Color.Gray
+                    )
                 )
                 ExposedDropdownMenu(expanded = dietExpanded, onDismissRequest = { dietExpanded = false }) {
                     dietOptions.forEach { (label, value) ->
@@ -244,22 +282,14 @@ fun GoalsManagement(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            OutlinedButton(
-                onClick = { viewmodel.saveDietType(userId) },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text("Guardar configuración de tipo de dieta") }
-
-            // ================== Botón global (opcional) ==================
             Button(
-                onClick = { viewmodel.saveAll(userId) },
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(containerColor = primaryBlue)
-            ) {
-                Text("Guardar Cambios", textAlign = TextAlign.Center)
-            }
+                onClick = { viewmodel.saveDietType(userId) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = JameoBlue,
+                    contentColor = Color.White
+                )
+            ) { Text("Guardar configuración de tipo de dieta") }
         }
 
         // Snackbar + Loader
