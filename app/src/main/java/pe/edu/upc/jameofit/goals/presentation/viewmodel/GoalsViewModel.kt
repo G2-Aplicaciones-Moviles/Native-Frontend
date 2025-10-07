@@ -134,14 +134,14 @@ class GoalsViewModel(
                 )
                 _goalSaveSuccess.value = ok
                 if (!ok) {
-                    _errorMessage.value = "No se pudo guardar objetivo y calorías."
+                    _errorMessage.value = "No se pudo guardar objetivo y ritmo de progreso."
                 } else {
                     // Si el backend normaliza valores, refrescamos
                     reload(userId)
                 }
             } catch (e: Exception) {
                 _goalSaveSuccess.value = false
-                _errorMessage.value = "Error al guardar objetivo y calorías: ${e.message}"
+                _errorMessage.value = "Error al guardar objetivo y ritmo de progreso: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -192,7 +192,7 @@ class GoalsViewModel(
                     )
                 )
                 _goalSaveSuccess.value = ok1
-                if (!ok1) _errorMessage.value = "No se pudo guardar objetivo y calorías."
+                if (!ok1) _errorMessage.value = "No se pudo guardar objetivo y ritmo."
 
                 val ok2 = goalsRepository.saveDietType(
                     userId = userId,

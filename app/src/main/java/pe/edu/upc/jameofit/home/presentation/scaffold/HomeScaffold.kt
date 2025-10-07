@@ -24,12 +24,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.R
 import pe.edu.upc.jameofit.home.presentation.navigation.DrawerRoute
 import pe.edu.upc.jameofit.home.presentation.navigation.TabGraph
+import pe.edu.upc.jameofit.ui.theme.JameoBlue
 
 /**
  * Root scaffold for the authenticated area:
@@ -147,11 +149,15 @@ fun HomeScaffold(
 
                 Spacer(Modifier.weight(1f))
 
-                FilledTonalButton(
+                Button(
                     onClick = { closeAnd(onRequestLogout) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = JameoBlue,
+                        contentColor = Color.White
+                    )
                 ) { Text("Cerrar Sesión") }
             }
         }

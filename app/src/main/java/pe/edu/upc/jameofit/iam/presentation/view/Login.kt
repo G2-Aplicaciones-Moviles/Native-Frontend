@@ -11,14 +11,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
@@ -38,6 +41,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +55,7 @@ import pe.edu.upc.jameofit.shared.presentation.components.ErrorSnackbarHost
 import pe.edu.upc.jameofit.shared.presentation.components.showErrorOnce
 import pe.edu.upc.jameofit.ui.theme.JameoBlue
 import pe.edu.upc.jameofit.ui.theme.JameoGreen
+
 
 
 @Composable
@@ -65,8 +73,11 @@ fun Login(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // “Recordar credenciales” (solo UI por ahora)
+    // "Recordar credenciales" (solo UI por ahora)
     var chk by remember { mutableStateOf(false) }
+
+    // Estado para mostrar/ocultar contraseña
+    var passwordVisible by remember { mutableStateOf(false) }
 
     // Navegación de éxito
     LaunchedEffect(loginSuccess) {
@@ -126,7 +137,8 @@ fun Login(
                     )
                 },
                 onValueChange = { viewmodel.updateUsername(it) },
-                singleLine = true
+                singleLine = true,
+                isError = !errorMessage.isNullOrBlank() && user.username.isBlank()
             )
 
             OutlinedTextField(
@@ -141,8 +153,23 @@ fun Login(
                         contentDescription = "Icono de contraseña"
                     )
                 },
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            painter = painterResource(id = if (passwordVisible) R.drawable.ojo_abierto else R.drawable.ojo_cerrado),
+                            contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                            tint = Color.Unspecified
+                        )
+                    }
+                },
                 onValueChange = { viewmodel.updatePassword(it) },
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                isError = !errorMessage.isNullOrBlank() && user.password.isBlank()
             )
 
             ElevatedButton(
