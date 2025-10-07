@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import androidx.navigation.navigation
+import pe.edu.upc.jameofit.faq.presentation.view.FaqScreen
 import pe.edu.upc.jameofit.goals.presentation.view.GoalsManagementRoute
 import pe.edu.upc.jameofit.goals.presentation.di.PresentationModule as GoalsPresentationModule
 import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule as IamPresentationModule
@@ -179,7 +180,7 @@ fun HomeNavHost(
             composable(DrawerRoute.PROGRESS) { PlaceholderScreen("Analíticas y estadísticas") }
             composable(DrawerRoute.MEAL_PLANS) { PlaceholderScreen("Planes de alimentación") }
             composable(DrawerRoute.SUBSCRIPTIONS) { PlaceholderScreen("Suscripciones") }
-            composable(DrawerRoute.FAQ) { PlaceholderScreen("Preguntas frecuentes") }
+            composable(DrawerRoute.FAQ) { FaqScreen() }
             composable(DrawerRoute.SETTINGS) { PlaceholderScreen("Ajustes") }
         }
     }
