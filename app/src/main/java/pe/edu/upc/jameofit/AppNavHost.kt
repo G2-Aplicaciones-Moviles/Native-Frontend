@@ -139,7 +139,7 @@ fun AppNavHost() {
                         }
                     },
                     onRegisterSuccess = {
-                        nav.navigate(Graph.Gate.route) {
+                        nav.navigate(Graph.Onboarding.route) {
                             popUpTo(nav.graph.id) { inclusive = true }
                             launchSingleTop = true
                         }
