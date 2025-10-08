@@ -21,18 +21,18 @@ class GoalsViewModel(
     // --------- Estado de Formularios (dos secciones) ---------
 
     // Sección 1: Objetivo y calorías
-    private val _objective = MutableStateFlow(ObjectiveType.LOSE_WEIGHT)
-    val objective: StateFlow<ObjectiveType> = _objective
+    private val _objective = MutableStateFlow<ObjectiveType?>(null)
+    val objective: StateFlow<ObjectiveType?> = _objective
 
-    private val _targetWeightText = MutableStateFlow("") // texto para validar en UI
-    val targetWeightText: StateFlow<String> = _targetWeightText
+    private val _targetWeightText = MutableStateFlow<String?>(null)
+    val targetWeightText: StateFlow<String?> = _targetWeightText
 
-    private val _pace = MutableStateFlow(PaceType.MODERATE)
-    val pace: StateFlow<PaceType> = _pace
+    private val _pace = MutableStateFlow<PaceType?>(null)
+    val pace: StateFlow<PaceType?> = _pace
 
     // Sección 2: Tipo de dieta (macros no editables; los define backend por preset)
-    private val _dietPreset = MutableStateFlow(DietPreset.OMNIVORE)
-    val dietPreset: StateFlow<DietPreset> = _dietPreset
+    private val _dietPreset = MutableStateFlow<DietPreset?>(null)
+    val dietPreset: StateFlow<DietPreset?> = _dietPreset
 
     // --------- Estado de UI (carga/éxito/error) ---------
     private val _isLoading = MutableStateFlow(false)
@@ -73,25 +73,27 @@ class GoalsViewModel(
     fun reload(userId: Long) = load(userId, force = true)
 
     private fun applyFromResponse(goal: GoalResponse) {
-        // objective
-        goal.objective
-            .toObjectiveTypeOrNull()
-            ?.let { _objective.value = it }
+        android.util.Log.d("GoalsViewModel", "=== APLICANDO RESPUESTA ===")
+        android.util.Log.d("GoalsViewModel", "GoalResponse completo: $goal")
 
-        // peso
-        goal.targetWeightKg
-            .takeIf { it > 0.0 }
-            ?.let { _targetWeightText.value = it.toString() }
+        // Aplica TODOS los valores, no solo los que parsean
+        val parsedObjective = goal.objective.toObjectiveTypeOrNull()
+        android.util.Log.d("GoalsViewModel", "objective raw: '${goal.objective}' → parsed: $parsedObjective")
+        _objective.value = parsedObjective // 👈 Siempre actualiza, incluso si es null
 
-        // pace
-        goal.pace
-            .toPaceTypeOrNull()
-            ?.let { _pace.value = it }
+        val validWeight = goal.targetWeightKg.takeIf { it > 0.0 }
+        android.util.Log.d("GoalsViewModel", "targetWeightKg raw: ${goal.targetWeightKg} → valid: $validWeight")
+        _targetWeightText.value = validWeight?.toString() // 👈 Puede ser null
 
-        // diet preset
-        goal.dietPreset
-            .toDietPresetOrNull()
-            ?.let { _dietPreset.value = it }
+        val parsedPace = goal.pace.toPaceTypeOrNull()
+        android.util.Log.d("GoalsViewModel", "pace raw: '${goal.pace}' → parsed: $parsedPace")
+        _pace.value = parsedPace
+
+        val parsedDiet = goal.dietPreset.toDietPresetOrNull()
+        android.util.Log.d("GoalsViewModel", "dietPreset raw: '${goal.dietPreset}' → parsed: $parsedDiet")
+        _dietPreset.value = parsedDiet
+
+        android.util.Log.d("GoalsViewModel", "=== FIN APLICAR RESPUESTA ===")
     }
 
     // --------- Update de campos ---------
@@ -113,10 +115,35 @@ class GoalsViewModel(
     }
 
     // --------- Acciones (guardar) ---------
-    fun saveGoalCalories(userId: Long) {
-        val weight = _targetWeightText.value.toDoubleOrNull()
+    /**
+     * Guarda la configuración de objetivo y calorías.
+     *
+     * @param userId ID del usuario
+     * @param overrideWeight Peso objetivo a usar. Si es null, usa el valor del StateFlow _targetWeightText
+     * @param overridePace Ritmo a usar. Si es null, usa el valor del StateFlow _pace
+     */
+    fun saveGoalCalories(
+        userId: Long,
+        overrideWeight: Double? = null,
+        overridePace: PaceType? = null
+    ) {
+        val weight = overrideWeight ?: _targetWeightText.value?.toDoubleOrNull()
         if (weight == null || weight <= 0.0) {
             _errorMessage.value = "Ingresa un peso objetivo válido"
+            _goalSaveSuccess.value = false
+            return
+        }
+
+        val paceToUse = overridePace ?: _pace.value
+        if (paceToUse == null) {
+            _errorMessage.value = "Selecciona un ritmo de progreso"
+            _goalSaveSuccess.value = false
+            return
+        }
+
+        val objectiveToUse = _objective.value
+        if (objectiveToUse == null) {
+            _errorMessage.value = "Selecciona un objetivo"
             _goalSaveSuccess.value = false
             return
         }
@@ -127,16 +154,15 @@ class GoalsViewModel(
                 val ok = goalsRepository.saveGoalCalories(
                     userId = userId,
                     config = GoalCalorieConfig(
-                        objective = _objective.value,
+                        objective = objectiveToUse,
                         targetWeightKg = weight,
-                        pace = _pace.value
+                        pace = paceToUse
                     )
                 )
                 _goalSaveSuccess.value = ok
                 if (!ok) {
                     _errorMessage.value = "No se pudo guardar objetivo y ritmo de progreso."
                 } else {
-                    // Si el backend normaliza valores, refrescamos
                     reload(userId)
                 }
             } catch (e: Exception) {
@@ -149,18 +175,24 @@ class GoalsViewModel(
     }
 
     fun saveDietType(userId: Long) {
+        val presetToUse = _dietPreset.value
+        if (presetToUse == null) {
+            _errorMessage.value = "Selecciona un tipo de dieta"
+            _dietSaveSuccess.value = false
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val ok = goalsRepository.saveDietType(
                     userId = userId,
-                    preset = _dietPreset.value
+                    preset = presetToUse
                 )
                 _dietSaveSuccess.value = ok
                 if (!ok) {
                     _errorMessage.value = "No se pudo actualizar el tipo de dieta."
                 } else {
-                    // Refrescar tras guardar
                     reload(userId)
                 }
             } catch (e: Exception) {
@@ -172,47 +204,6 @@ class GoalsViewModel(
         }
     }
 
-    fun saveAll(userId: Long) {
-        val weight = _targetWeightText.value.toDoubleOrNull()
-        if (weight == null || weight <= 0.0) {
-            _errorMessage.value = "Ingresa un peso objetivo válido"
-            _goalSaveSuccess.value = false
-            return
-        }
-
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val ok1 = goalsRepository.saveGoalCalories(
-                    userId = userId,
-                    config = GoalCalorieConfig(
-                        objective = _objective.value,
-                        targetWeightKg = weight,
-                        pace = _pace.value
-                    )
-                )
-                _goalSaveSuccess.value = ok1
-                if (!ok1) _errorMessage.value = "No se pudo guardar objetivo y ritmo."
-
-                val ok2 = goalsRepository.saveDietType(
-                    userId = userId,
-                    preset = _dietPreset.value
-                )
-                _dietSaveSuccess.value = ok2
-                if (!ok2) _errorMessage.value = "No se pudo actualizar el tipo de dieta."
-
-                if (ok1 && ok2) {
-                    reload(userId)
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Error al guardar cambios: ${e.message}"
-                _goalSaveSuccess.value = false
-                _dietSaveSuccess.value = false
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
 
     // --------- Utilitarios de UI ---------
     fun resetGoalSaveSuccess() { _goalSaveSuccess.value = null }

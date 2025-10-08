@@ -12,9 +12,14 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.navigation
 import pe.edu.upc.jameofit.faq.presentation.view.FaqScreen
 import pe.edu.upc.jameofit.goals.presentation.view.GoalsManagementRoute
+import pe.edu.upc.jameofit.goals.presentation.viewmodel.GoalsViewModel
+import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.goals.presentation.di.PresentationModule as GoalsPresentationModule
 import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule as IamPresentationModule
 import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
@@ -158,8 +163,26 @@ fun HomeNavHost(
             // Drawer destinations
             composable(DrawerRoute.PROFILE) { PlaceholderScreen("Perfil") }
             composable(DrawerRoute.GOALS) {
-                val authVm = IamPresentationModule.getAuthViewModel()
-                val goalsVm = GoalsPresentationModule.getGoalsViewModel()
+
+                val authVm: AuthViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return IamPresentationModule.getAuthViewModel() as T
+                        }
+                    }
+                )
+
+
+                val goalsVm: GoalsViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return GoalsPresentationModule.getGoalsViewModel() as T
+                        }
+                    }
+                )
+
                 GoalsManagementRoute(
                     authViewModel = authVm,
                     goalsViewModel = goalsVm,
