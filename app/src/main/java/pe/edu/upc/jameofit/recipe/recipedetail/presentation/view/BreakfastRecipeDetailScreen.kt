@@ -1,4 +1,4 @@
-package pe.edu.upc.jameofit.recipedetail.presentation.view
+package pe.edu.upc.jameofit.recipe.recipedetail.presentation.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,15 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
 import pe.edu.upc.jameofit.R
 
 @Composable
-fun DinnerRecipeDetailScreen() {
+fun BreakfastRecipeDetailScreen(modifier: Modifier = Modifier) {
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color.White)
             .padding(16.dp),
@@ -39,8 +39,8 @@ fun DinnerRecipeDetailScreen() {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ensalada_palta_tomate_huevo),
-                        contentDescription = "Ensalada de palta con tomate y huevo",
+                        painter = painterResource(id = R.drawable.pan_palta_huevo),
+                        contentDescription = "Pan con palta y huevo sancochado",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(180.dp)
@@ -48,7 +48,11 @@ fun DinnerRecipeDetailScreen() {
 
                     Spacer(Modifier.height(12.dp))
 
-                    Text("Cena Especial", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(
+                        text = "Desayuno Completo",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
                     Text("350 kcal", fontSize = 14.sp, color = Color.DarkGray)
                     Text("Porción: 1", fontSize = 14.sp, color = Color.DarkGray)
                 }
@@ -57,7 +61,7 @@ fun DinnerRecipeDetailScreen() {
             Spacer(Modifier.height(20.dp))
 
             Text(
-                text = "Ingredientes Cena",
+                text = "Ingredientes Desayuno",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 modifier = Modifier.fillMaxWidth(),
@@ -66,17 +70,19 @@ fun DinnerRecipeDetailScreen() {
 
             Spacer(Modifier.height(12.dp))
 
-            IngredientItem3("Palta en rodajas (¼ unidad)")
-            IngredientItem3("Tomate en cubos")
-            IngredientItem3("1 huevo sancochado picado")
-            IngredientItem3("Hojas verdes (lechuga, espinaca, arúgula)")
-            IngredientItem3("Limón, sal ligera y un chorrito de aceite de oliva")
+            IngredientItem("Pan integral o de granos")
+            IngredientItem("Palta en rodajas")
+            IngredientItem("1 huevo sancochado (duro)")
+            IngredientItem("Sal y limón al gusto")
 
             Spacer(Modifier.height(24.dp))
 
+            // Botones
             Button(
-                onClick = { },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                onClick = { /* TODO descargar */ },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
             ) {
                 Text("Descargar receta")
@@ -85,8 +91,10 @@ fun DinnerRecipeDetailScreen() {
             Spacer(Modifier.height(12.dp))
 
             Button(
-                onClick = { },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                onClick = { /* TODO seleccionar */ },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
             ) {
                 Text("Seleccionar receta para el plan")
@@ -98,10 +106,12 @@ fun DinnerRecipeDetailScreen() {
 }
 
 @Composable
-fun IngredientItem3(text: String) {
+fun IngredientItem(text: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
     ) {
         Icon(
             imageVector = Icons.Default.ShoppingCart,

@@ -44,7 +44,12 @@ object RecipeRoute {
     const val BREAKFAST = "recipe/breakfast"
     const val LUNCH = "recipe/lunch"
     const val DINNER = "recipe/dinner"
+
+    const val BREAKFAST_DETAIL = "recipe/breakfast_detail"
+    const val LUNCH_DETAIL = "recipe/lunch_detail"
+    const val DINNER_DETAIL = "recipe/dinner_detail"
 }
+
 
 /**
  * Drawer-only destinations that sit outside of the tab graphs.

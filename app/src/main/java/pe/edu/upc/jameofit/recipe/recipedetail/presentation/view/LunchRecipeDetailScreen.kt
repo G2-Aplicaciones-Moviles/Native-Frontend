@@ -1,4 +1,4 @@
-package pe.edu.upc.jameofit.recipedetail.presentation.view
+package pe.edu.upc.jameofit.recipe.recipedetail.presentation.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
