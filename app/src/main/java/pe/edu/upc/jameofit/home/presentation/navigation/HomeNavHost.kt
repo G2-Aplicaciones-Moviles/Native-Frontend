@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -25,6 +26,9 @@ import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule as IamPresenta
 import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanScreen
 import pe.edu.upc.jameofit.recipedetail.presentation.view.BreakfastRecipeDetailScreen
+import pe.edu.upc.jameofit.recommendations.presentation.di.PresentationModule as RecommendationsPresentationModule
+import pe.edu.upc.jameofit.recommendations.presentation.view.RecommendationsRoute
+
 
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
@@ -69,6 +73,7 @@ fun HomeNavHost(
         DrawerRoute.SUBSCRIPTIONS,
         DrawerRoute.FAQ,
         DrawerRoute.SETTINGS,
+        DrawerRoute.RECOMMENDATIONS -> TabGraph.TIPS
         RecipeRoute.BREAKFAST -> currentRoute
 
         else -> TabGraph.TRACKING
@@ -143,8 +148,18 @@ fun HomeNavHost(
                 startDestination = HomeRoute.TIPS,
                 route = TabGraph.TIPS
             ) {
-                composable(HomeRoute.TIPS) { PlaceholderScreen("Tips saludables") }
+                composable(HomeRoute.TIPS) {
+                    val recVm = remember {
+                        pe.edu.upc.jameofit.recommendations.presentation.di.PresentationModule.getRecommendationsViewModel()
+                    }
+
+                    pe.edu.upc.jameofit.recommendations.presentation.view.RecommendationsRoute(
+                        recommendationsViewModel = recVm,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
+
 
             navigation(
                 startDestination = HomeRoute.MESSAGES,
@@ -189,6 +204,20 @@ fun HomeNavHost(
                     onBack = { navController.popBackStack() }
                 )
             }
+            composable(DrawerRoute.RECOMMENDATIONS) {
+                // Recordamos el ViewModel para que no se reinicie al recomponerse
+                val recVm = remember {
+                    pe.edu.upc.jameofit.recommendations.presentation.di.PresentationModule.getRecommendationsViewModel()
+                }
+
+                pe.edu.upc.jameofit.recommendations.presentation.view.RecommendationsRoute(
+                    recommendationsViewModel = recVm,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+
+
             composable(DrawerRoute.PROGRESS) { PlaceholderScreen("Analíticas y estadísticas") }
 
             // Aquí pasamos el navController a MealPlanScreen

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.DrawerValue
@@ -107,6 +108,15 @@ fun HomeScaffold(
                         )
                     }
                 )
+
+                NavigationDrawerItem(
+                    label = { Text("Mis Recomendaciones") },
+                    selected = currentDestination == DrawerRoute.RECOMMENDATIONS,
+                    onClick = { closeAnd { onNavigateDrawer(DrawerRoute.RECOMMENDATIONS) } },
+                    icon = { Icon(Icons.Default.Favorite, contentDescription = null) }
+
+                )
+
                 NavigationDrawerItem(
                     label = { Text("Ver Planes Alimenticios") },
                     selected = currentDestination == DrawerRoute.MEAL_PLANS,
