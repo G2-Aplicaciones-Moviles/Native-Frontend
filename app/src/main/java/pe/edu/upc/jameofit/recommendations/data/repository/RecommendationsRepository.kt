@@ -13,4 +13,10 @@ class RecommendationsRepository(
             val response = api.getRecommendationsByUser(userId)
             if (response.isSuccessful) response.body() else null
         }
+
+    suspend fun getAllRecommendations(): List<RecommendationResponse>? =
+        withContext(Dispatchers.IO) {
+            val response = api.getAllRecommendations()
+            if (response.isSuccessful) response.body() else null
+        }
 }
