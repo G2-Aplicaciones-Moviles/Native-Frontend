@@ -31,18 +31,30 @@ class AuthRepository(
 
     suspend fun register(user: User): Boolean = withContext(Dispatchers.IO) {
         val res = authService.register(RegisterRequest.fromUser(user))
-        if (!res.isSuccessful) return@withContext false
+
+
+        if (!res.isSuccessful) {
+
+            return@withContext false
+        }
 
         val body = res.body()
         val token = body?.token
         val id = body?.id
 
+
+
         if (id != null) {
             UserSessionStorage.saveUserId(id.toLong())
         }
-        if (!token.isNullOrBlank()) {
+        if (token.isNullOrBlank()) {
+
+            return@withContext login(user)  // Llamar a login con las mismas credenciales
+        } else {
             JwtStorage.saveToken(token)
+
         }
+
         true
     }
 

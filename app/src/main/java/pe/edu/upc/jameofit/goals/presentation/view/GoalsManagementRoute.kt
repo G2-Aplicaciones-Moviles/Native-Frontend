@@ -12,10 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import pe.edu.upc.jameofit.goals.presentation.viewmodel.GoalsViewModel
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.shared.presentation.components.FullscreenLoader
 import kotlinx.coroutines.launch
+import pe.edu.upc.jameofit.goals.presentation.viewmodel.GoalsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

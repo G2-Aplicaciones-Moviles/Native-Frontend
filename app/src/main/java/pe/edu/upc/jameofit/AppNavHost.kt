@@ -21,6 +21,7 @@ import pe.edu.upc.jameofit.profile.presentation.view.ProfileSetup
 import pe.edu.upc.jameofit.profile.presentation.view.SetupDone
 import pe.edu.upc.jameofit.shared.data.local.JwtStorage
 import androidx.core.content.edit
+import pe.edu.upc.jameofit.profile.presentation.view.HealthSetupRoute
 
 private const val PREF_AUTH = "pref_auth"
 private const val KEY_WELCOME_SEEN = "welcome_seen"
@@ -161,12 +162,16 @@ fun AppNavHost() {
         navigation(startDestination = "profile_setup", route = Graph.Onboarding.route) {
             composable("profile_setup") {
                 ProfileSetup(
-                    onNext = { nav.navigate("health_profile") },
+                    onNext = { nav.navigate("health_setup") },
                     onBack = { /* opcional */ }
                 )
             }
-            composable("health_profile") {
-                HealthSetup(
+            composable("health_setup") {
+                val authViewModel = PresentationModule.getAuthViewModel()
+                val goalsViewModel = pe.edu.upc.jameofit.goals.presentation.di.PresentationModule.getGoalsViewModel()
+                HealthSetupRoute(
+                    authViewModel = authViewModel,
+                    goalsViewModel = goalsViewModel,
                     onNext = { nav.navigate("setup_done") },
                     onBack = { nav.popBackStack() }
                 )

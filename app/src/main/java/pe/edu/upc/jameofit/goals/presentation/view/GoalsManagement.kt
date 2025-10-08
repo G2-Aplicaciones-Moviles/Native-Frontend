@@ -38,11 +38,39 @@ fun GoalsManagement(
     viewmodel: GoalsViewModel,
     onBack: () -> Unit
 ) {
+    DisposableEffect(Unit) {
+        android.util.Log.d("GoalsManagement", "Composable creado/recompuesto")
+        onDispose {
+            android.util.Log.d("GoalsManagement", "Composable destruido")
+        }
+    }
+
+    LaunchedEffect(userId) {
+        android.util.Log.d("GoalsManagement", "LaunchedEffect ejecutado para userId: $userId")
+        viewmodel.load(userId)
+    }
+    // ✅ Flag local para evitar múltiples cargas
+    var hasInitiallyLoaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(userId) {
+        if (!hasInitiallyLoaded) {
+            android.util.Log.d("GoalsManagement", "Primera carga para userId: $userId")
+            viewmodel.load(userId)
+            hasInitiallyLoaded = true
+        }
+    }
+
     // ---------- STATE FROM VM ----------
     val objective by viewmodel.objective.collectAsState()
     val targetWeightText by viewmodel.targetWeightText.collectAsState()
     val pace by viewmodel.pace.collectAsState()
     val dietPreset by viewmodel.dietPreset.collectAsState()
+
+    // Valores con defaults
+    val currentObjective = objective ?: ObjectiveType.LOSE_WEIGHT
+    val currentTargetWeight = targetWeightText ?: ""
+    val currentPace = pace ?: PaceType.MODERATE
+    val currentDietPreset = dietPreset ?: DietPreset.OMNIVORE
 
     val isLoading by viewmodel.isLoading.collectAsState()
     val goalSaveSuccess by viewmodel.goalSaveSuccess.collectAsState()
@@ -62,7 +90,7 @@ fun GoalsManagement(
         }
     }
 
-    // Éxitos → Toasts breves (puedes cambiarlos por Snackbars si lo prefieres)
+    // Éxitos → Toasts
     LaunchedEffect(goalSaveSuccess) {
         if (goalSaveSuccess == true) {
             Toast.makeText(ctx, "Objetivo y calorías actualizados", Toast.LENGTH_SHORT).show()
@@ -75,8 +103,6 @@ fun GoalsManagement(
             viewmodel.resetDietSaveSuccess()
         }
     }
-
-    val primaryBlue = Color(0xFF099FE1)
 
     Box(
         modifier = Modifier
@@ -115,7 +141,9 @@ fun GoalsManagement(
                 "Mantener el peso" to ObjectiveType.MAINTAIN_WEIGHT,
                 "Ganar masa muscular" to ObjectiveType.GAIN_MUSCLE
             )
-            val objSelectedLabel = objectiveOptions.first { it.second == objective }.first
+            // 👇 CAMBIADO: firstOrNull con fallback
+            val objSelectedLabel = objectiveOptions.firstOrNull { it.second == currentObjective }?.first
+                ?: "Bajar de peso"
 
             ExposedDropdownMenuBox(
                 expanded = objExpanded,
@@ -149,9 +177,9 @@ fun GoalsManagement(
             }
 
             // Peso objetivo
-            val targetWeightError = targetWeightText.toDoubleOrNull()?.let { it <= 0.0 } == true
+            val targetWeightError = currentTargetWeight.toDoubleOrNull()?.let { it <= 0.0 } == true
             TextField(
-                value = targetWeightText,
+                value = currentTargetWeight,
                 onValueChange = { s -> viewmodel.updateTargetWeightKgText(s) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Peso objetivo (kg)") },
@@ -176,7 +204,9 @@ fun GoalsManagement(
                 "Moderado (0.5 kg/sem)" to PaceType.MODERATE,
                 "Rápido (0.75 kg/sem)" to PaceType.FAST
             )
-            val paceSelectedLabel = paceOptions.first { it.second == pace }.first
+            // 👇 CAMBIADO: firstOrNull con fallback
+            val paceSelectedLabel = paceOptions.firstOrNull { it.second == currentPace }?.first
+                ?: "Moderado (0.5 kg/sem)"
 
             ExposedDropdownMenuBox(
                 expanded = paceExpanded,
@@ -230,7 +260,9 @@ fun GoalsManagement(
                 "Alta en proteínas" to DietPreset.HIGH_PROTEIN,
                 "Mediterránea" to DietPreset.MEDITERRANEAN
             )
-            val dietSelectedLabel = dietOptions.first { it.second == dietPreset }.first
+            // 👇 CAMBIADO: firstOrNull con fallback
+            val dietSelectedLabel = dietOptions.firstOrNull { it.second == currentDietPreset }?.first
+                ?: "Omnívoro"
 
             ExposedDropdownMenuBox(
                 expanded = dietExpanded,
@@ -274,7 +306,7 @@ fun GoalsManagement(
                     DietPreset.MEDITERRANEAN to Triple(25, 45, 30)
                 )
             }
-            val (pS, cS, fS) = presetMacros[dietPreset] ?: Triple(0, 0, 0)
+            val (pS, cS, fS) = presetMacros[currentDietPreset] ?: Triple(0, 0, 0)
 
             Text(
                 text = "Macros sugeridos: Proteínas $pS% · Carbohidratos $cS% · Grasas $fS%",
