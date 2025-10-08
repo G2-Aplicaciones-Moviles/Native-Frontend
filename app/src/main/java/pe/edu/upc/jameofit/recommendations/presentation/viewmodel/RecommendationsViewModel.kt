@@ -21,11 +21,16 @@ class RecommendationsViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    fun loadRecommendations(userId: Long) {
+    fun loadRecommendations(userId: Long? = null) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val data = repository.getRecommendations(userId)
+                val data = if (userId != null && userId >= 0) {
+                    repository.getRecommendations(userId)
+                } else {
+                    repository.getAllRecommendations()
+                }
+                android.util.Log.d("RECS_DEBUG", "Recomendaciones cargadas: ${data?.size}")
                 _recommendations.value = data ?: emptyList()
             } catch (e: Exception) {
                 _error.value = "No se pudieron cargar las recomendaciones: ${e.message}"
@@ -34,4 +39,6 @@ class RecommendationsViewModel(
             }
         }
     }
+
+
 }
