@@ -1,6 +1,6 @@
-package pe.edu.upc.jameofit.recommendation.data.remote
+package pe.edu.upc.jameofit.recommendations.data.remote
 
-import pe.edu.upc.jameofit.recommendation.data.model.RecommendationResponse
+import pe.edu.upc.jameofit.recommendations.data.model.RecommendationResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path

@@ -1,4 +1,4 @@
-package pe.edu.upc.jameofit.recommendation.data.model
+package pe.edu.upc.jameofit.recommendations.data.model
 
 data class RecommendationResponse(
     val id: Long,
