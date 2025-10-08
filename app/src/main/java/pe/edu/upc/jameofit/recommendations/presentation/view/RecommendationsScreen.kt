@@ -23,9 +23,8 @@ fun RecommendationsScreen(
     val loading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    LaunchedEffect(userId) {
-        viewModel.loadRecommendations(userId)
-    }
+    // ⚠️ NO LLAMAMOS loadRecommendations() AQUÍ
+    // Se llama solo una vez desde RecommendationsRoute.kt
 
     Scaffold(
         topBar = {
@@ -40,15 +39,30 @@ fun RecommendationsScreen(
         }
     ) { padding ->
         when {
-            loading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            loading -> Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
                 CircularProgressIndicator()
             }
 
-            error != null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            error != null -> Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(error ?: "Error desconocido")
             }
 
-            list.isEmpty() -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            list.isEmpty() -> Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
                 Text("No tienes recomendaciones todavía.")
             }
 
@@ -62,10 +76,22 @@ fun RecommendationsScreen(
                 items(list) { rec ->
                     ElevatedCard(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
-                            Text(rec.title, style = MaterialTheme.typography.titleMedium)
-                            Text(rec.content, style = MaterialTheme.typography.bodyMedium)
+                            // Mostramos la información real que devuelve el backend
+                            Text(
+                                text = "Recomendación #${rec.id}",
+                                style = MaterialTheme.typography.titleMedium
+                            )
                             rec.reason?.let {
-                                Text("Motivo: $it", style = MaterialTheme.typography.bodySmall)
+                                Text(it, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            rec.notes?.let {
+                                Text("Nota: $it", style = MaterialTheme.typography.bodySmall)
+                            }
+                            rec.timeOfDay?.let {
+                                Text("Momento del día: $it", style = MaterialTheme.typography.bodySmall)
+                            }
+                            rec.status?.let {
+                                Text("Estado: $it", style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
