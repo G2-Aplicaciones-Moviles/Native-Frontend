@@ -25,10 +25,12 @@ import pe.edu.upc.jameofit.goals.presentation.di.PresentationModule as GoalsPres
 import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule as IamPresentationModule
 import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanScreen
-import pe.edu.upc.jameofit.recipedetail.presentation.view.BreakfastRecipeDetailScreen
-import pe.edu.upc.jameofit.recommendations.presentation.di.PresentationModule as RecommendationsPresentationModule
-import pe.edu.upc.jameofit.recommendations.presentation.view.RecommendationsRoute
-
+import pe.edu.upc.jameofit.recipe.presentation.view.BreakfastScreen
+import pe.edu.upc.jameofit.recipe.presentation.view.LunchScreen
+import pe.edu.upc.jameofit.recipe.presentation.view.DinnerScreen
+import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.BreakfastRecipeDetailScreen
+import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.DinnerRecipeDetailScreen
+import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.LunchRecipeDetailScreen
 
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
@@ -39,7 +41,9 @@ private fun titleForRoute(route: String) = when {
     route == DrawerRoute.GOALS -> "Gestionar objetivos"
     route == DrawerRoute.PROGRESS -> "Analíticas y estadísticas"
     route == DrawerRoute.MEAL_PLANS -> "Planes de alimentación"
-    route == RecipeRoute.BREAKFAST -> "Detalle de desayuno"
+    route == RecipeRoute.BREAKFAST -> "Desayuno"
+    route == RecipeRoute.LUNCH -> "Almuerzo"
+    route == RecipeRoute.DINNER -> "Cena"
     route == DrawerRoute.SUBSCRIPTIONS -> "Suscripciones"
     route == DrawerRoute.FAQ -> "Preguntas frecuentes"
     route == DrawerRoute.SETTINGS -> "Ajustes"
@@ -73,9 +77,10 @@ fun HomeNavHost(
         DrawerRoute.SUBSCRIPTIONS,
         DrawerRoute.FAQ,
         DrawerRoute.SETTINGS,
-        DrawerRoute.RECOMMENDATIONS -> TabGraph.TIPS
-        RecipeRoute.BREAKFAST -> currentRoute
-
+        DrawerRoute.RECOMMENDATIONS,
+        RecipeRoute.BREAKFAST,
+        RecipeRoute.LUNCH,
+        RecipeRoute.DINNER -> currentRoute
         else -> TabGraph.TRACKING
     }
 
@@ -98,7 +103,9 @@ fun HomeNavHost(
                 DrawerRoute.SUBSCRIPTIONS,
                 DrawerRoute.FAQ,
                 DrawerRoute.SETTINGS,
-                RecipeRoute.BREAKFAST -> true
+                RecipeRoute.BREAKFAST,
+                RecipeRoute.LUNCH,
+                RecipeRoute.DINNER -> true
                 else -> false
             }
             if (isDrawer) {
@@ -160,7 +167,6 @@ fun HomeNavHost(
                 }
             }
 
-
             navigation(
                 startDestination = HomeRoute.MESSAGES,
                 route = TabGraph.MESSAGES
@@ -178,7 +184,6 @@ fun HomeNavHost(
             // Drawer destinations
             composable(DrawerRoute.PROFILE) { PlaceholderScreen("Perfil") }
             composable(DrawerRoute.GOALS) {
-
                 val authVm: AuthViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
                         @Suppress("UNCHECKED_CAST")
@@ -187,7 +192,6 @@ fun HomeNavHost(
                         }
                     }
                 )
-
 
                 val goalsVm: GoalsViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
@@ -205,7 +209,6 @@ fun HomeNavHost(
                 )
             }
             composable(DrawerRoute.RECOMMENDATIONS) {
-                // Recordamos el ViewModel para que no se reinicie al recomponerse
                 val recVm = remember {
                     pe.edu.upc.jameofit.recommendations.presentation.di.PresentationModule.getRecommendationsViewModel()
                 }
@@ -216,21 +219,28 @@ fun HomeNavHost(
                 )
             }
 
-
-
             composable(DrawerRoute.PROGRESS) { PlaceholderScreen("Analíticas y estadísticas") }
 
-            // Aquí pasamos el navController a MealPlanScreen
+            // Meal plan entry
             composable(DrawerRoute.MEAL_PLANS) { MealPlanScreen(navController = navController) }
 
             composable(DrawerRoute.SUBSCRIPTIONS) { PlaceholderScreen("Suscripciones") }
             composable(DrawerRoute.FAQ) { FaqScreen() }
             composable(DrawerRoute.SETTINGS) { PlaceholderScreen("Ajustes") }
 
-            // RUTAS DE RECETAS (registradas con los mismos strings que usas en MealPlanScreen)
-            composable(RecipeRoute.BREAKFAST) { BreakfastRecipeDetailScreen() }
-            composable(RecipeRoute.LUNCH) { PlaceholderScreen("Almuerzo") }
-            composable(RecipeRoute.DINNER) { PlaceholderScreen("Cena") }
+            composable(RecipeRoute.BREAKFAST) { BreakfastScreen(navController = navController) }
+            composable(RecipeRoute.LUNCH) { LunchScreen(navController = navController) }
+            composable(RecipeRoute.DINNER) { DinnerScreen(navController = navController) }
+
+            composable(RecipeRoute.BREAKFAST_DETAIL) {
+                BreakfastRecipeDetailScreen()
+            }
+            composable(RecipeRoute.LUNCH_DETAIL) {
+                LunchRecipeDetailScreen()
+            }
+            composable(RecipeRoute.DINNER_DETAIL) {
+                DinnerRecipeDetailScreen()
+            }
         }
     }
 }
