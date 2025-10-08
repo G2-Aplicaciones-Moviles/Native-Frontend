@@ -57,4 +57,7 @@ object DrawerRoute {
     const val SUBSCRIPTIONS = "drawer/subscriptions"
     const val FAQ = "drawer/faq"
     const val SETTINGS = "drawer/settings"
+
+    const val RECOMMENDATIONS = "drawer/recommendations"
+
 }
