@@ -1,93 +1,94 @@
 package pe.edu.upc.jameofit
 
 import android.content.Context
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.edit
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import pe.edu.upc.jameofit.home.presentation.navigation.HomeNavHost
-import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule
 import pe.edu.upc.jameofit.iam.presentation.view.ForgotPassword
 import pe.edu.upc.jameofit.iam.presentation.view.Login
 import pe.edu.upc.jameofit.iam.presentation.view.Register
 import pe.edu.upc.jameofit.iam.presentation.view.Welcome
+import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.navigation.AuthRoute
 import pe.edu.upc.jameofit.navigation.Graph
-import pe.edu.upc.jameofit.profile.presentation.view.HealthSetup
+import pe.edu.upc.jameofit.profile.presentation.view.HealthSetupRoute
 import pe.edu.upc.jameofit.profile.presentation.view.ProfileSetup
 import pe.edu.upc.jameofit.profile.presentation.view.SetupDone
 import pe.edu.upc.jameofit.shared.data.local.JwtStorage
-import androidx.core.content.edit
-import pe.edu.upc.jameofit.profile.presentation.view.HealthSetupRoute
+import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule as IamPM
+import pe.edu.upc.jameofit.profile.presentation.di.PresentationModule as ProfilePM
 
 private const val PREF_AUTH = "pref_auth"
 private const val KEY_WELCOME_SEEN = "welcome_seen"
 
 private fun markWelcomeSeen(context: Context) {
     context.getSharedPreferences(PREF_AUTH, Context.MODE_PRIVATE)
-        .edit {
-            putBoolean(KEY_WELCOME_SEEN, true)
-        }
+        .edit { putBoolean(KEY_WELCOME_SEEN, true) }
 }
 
 private fun decideNextRoute(context: Context): String {
     val token = JwtStorage.getToken()
     if (token.isNullOrBlank()) return Graph.Auth.route
 
-    val profileCompleted = context
-        .getSharedPreferences("pref_profile", Context.MODE_PRIVATE)
+    val profileCompleted = context.getSharedPreferences("pref_profile", Context.MODE_PRIVATE)
         .getBoolean("profile_completed", false)
 
-    val healthCompleted = context
-        .getSharedPreferences("pref_health_profile", Context.MODE_PRIVATE)
+    val healthCompleted = context.getSharedPreferences("pref_health_profile", Context.MODE_PRIVATE)
         .getBoolean("health_profile_completed", false)
 
     return if (profileCompleted && healthCompleted) Graph.Main.route else Graph.Onboarding.route
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavHost() {
-    val nav = rememberNavController()
+    val navController = rememberNavController()
 
-    NavHost(
-        navController = nav,
-        startDestination = Graph.Gate.route
-    ) {
-        // 1) Gate: decide una sola vez a dónde ir (Auth, Onboarding o Main)
+    // ✅ CORREGIDO: Especificar el tipo explícitamente
+    val authViewModel: AuthViewModel = viewModel(factory = IamPM.authViewModelFactory())
+
+    NavHost(navController = navController, startDestination = Graph.Gate.route) {
+
+        // Gate
         composable(Graph.Gate.route) {
             GateScreen(
                 goToAuth = {
-                    nav.navigate(Graph.Auth.route) {
-                        popUpTo(nav.graph.id) { inclusive = true }
+                    navController.navigate(Graph.Auth.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
                 goToOnboarding = {
-                    nav.navigate(Graph.Onboarding.route) {
-                        popUpTo(nav.graph.id) { inclusive = true }
+                    navController.navigate(Graph.Onboarding.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
                 goToMain = {
-                    nav.navigate(Graph.Main.route) {
-                        popUpTo(nav.graph.id) { inclusive = true }
+                    navController.navigate(Graph.Main.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
             )
         }
 
-        // 2) Auth graph
+        // Auth Graph
         navigation(startDestination = AuthRoute.GATE, route = Graph.Auth.route) {
             composable(AuthRoute.GATE) {
                 val context = LocalContext.current
-                LaunchedEffect(true) {
+                LaunchedEffect(Unit) {
                     val seen = context.getSharedPreferences(PREF_AUTH, Context.MODE_PRIVATE)
                         .getBoolean(KEY_WELCOME_SEEN, false)
-                    nav.navigate(if (seen) AuthRoute.LOGIN else AuthRoute.WELCOME) {
+                    navController.navigate(if (seen) AuthRoute.LOGIN else AuthRoute.WELCOME) {
                         popUpTo(AuthRoute.GATE) { inclusive = true }
                         launchSingleTop = true
                     }
@@ -99,14 +100,14 @@ fun AppNavHost() {
                 Welcome(
                     goToRegister = {
                         markWelcomeSeen(context)
-                        nav.navigate(AuthRoute.REGISTER) {
+                        navController.navigate(AuthRoute.REGISTER) {
                             popUpTo(AuthRoute.WELCOME) { inclusive = true }
                             launchSingleTop = true
                         }
                     },
                     goToLogin = {
                         markWelcomeSeen(context)
-                        nav.navigate(AuthRoute.LOGIN) {
+                        navController.navigate(AuthRoute.LOGIN) {
                             popUpTo(AuthRoute.WELCOME) { inclusive = true }
                             launchSingleTop = true
                         }
@@ -115,33 +116,30 @@ fun AppNavHost() {
             }
 
             composable(AuthRoute.LOGIN) {
-                val vm = PresentationModule.getAuthViewModel()
                 Login(
-                    viewmodel = vm,
-                    goToRegister = { nav.navigate(AuthRoute.REGISTER) },
+                    viewModel = authViewModel,
+                    goToRegister = { navController.navigate(AuthRoute.REGISTER) },
                     onLoginSuccess = {
-                        nav.navigate(Graph.Gate.route) {
-                            popUpTo(nav.graph.id) { inclusive = true }
+                        navController.navigate(Graph.Gate.route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
                             launchSingleTop = true
                         }
                     },
-                    goToForgotPassword = { nav.navigate(AuthRoute.FORGOT) }
+                    goToForgotPassword = { navController.navigate(AuthRoute.FORGOT) }
                 )
             }
 
             composable(AuthRoute.REGISTER) {
-                val vm = PresentationModule.getAuthViewModel()
                 Register(
-                    viewmodel = vm,
+                    viewModel = authViewModel,
                     goToLogin = {
-                        nav.navigate(AuthRoute.LOGIN) {
+                        navController.navigate(AuthRoute.LOGIN) {
                             popUpTo(AuthRoute.REGISTER) { inclusive = true }
-                            launchSingleTop = true
                         }
                     },
                     onRegisterSuccess = {
-                        nav.navigate(Graph.Onboarding.route) {
-                            popUpTo(nav.graph.id) { inclusive = true }
+                        navController.navigate(Graph.Onboarding.route) {
+                            popUpTo(Graph.Auth.route) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
@@ -150,37 +148,40 @@ fun AppNavHost() {
 
             composable(AuthRoute.FORGOT) {
                 ForgotPassword(
-                    goBack = { nav.popBackStack() },
-                    onSubmitEmail = { _ ->
-                        nav.popBackStack()
-                    }
+                    goBack = { navController.popBackStack() },
+                    onSubmitEmail = { _ -> navController.popBackStack() }
                 )
             }
         }
 
-        // 3) Onboarding graph
+        // Onboarding Graph
         navigation(startDestination = "profile_setup", route = Graph.Onboarding.route) {
             composable("profile_setup") {
+                val authUser by authViewModel.user.collectAsState()
+
                 ProfileSetup(
-                    onNext = { nav.navigate("health_setup") },
-                    onBack = { /* opcional */ }
+                    authUserId = authUser.id,
+                    onNext = { navController.navigate("health_setup") },
+                    onBack = { navController.popBackStack() }
                 )
             }
+
             composable("health_setup") {
-                val authViewModel = PresentationModule.getAuthViewModel()
-                val goalsViewModel = pe.edu.upc.jameofit.goals.presentation.di.PresentationModule.getGoalsViewModel()
+                val profileSetupVm = remember { ProfilePM.getProfileSetupViewModel() }
+
                 HealthSetupRoute(
                     authViewModel = authViewModel,
-                    goalsViewModel = goalsViewModel,
-                    onNext = { nav.navigate("setup_done") },
-                    onBack = { nav.popBackStack() }
+                    profileSetupViewModel = profileSetupVm,
+                    onNext = { navController.navigate("setup_done") },
+                    onBack = { navController.popBackStack() }
                 )
             }
+
             composable("setup_done") {
                 SetupDone(
                     onFinish = {
-                        nav.navigate(Graph.Main.route) {
-                            popUpTo(nav.graph.id) { inclusive = true }
+                        navController.navigate(Graph.Main.route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
@@ -188,16 +189,16 @@ fun AppNavHost() {
             }
         }
 
-        // 4) Main graph
+        // Main Graph
         navigation(startDestination = "home", route = Graph.Main.route) {
             composable("home") {
-                val vm = PresentationModule.getAuthViewModel()
                 HomeNavHost(
-                    navController = rememberNavController(),
+                    navController = navController,
+                    authViewModel = authViewModel,
                     onRequestLogout = {
-                        vm.logout()
-                        nav.navigate(Graph.Gate.route) {
-                            popUpTo(nav.graph.id) { inclusive = true }
+                        authViewModel.logout()
+                        navController.navigate(Graph.Gate.route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
                             launchSingleTop = true
                         }
                     }

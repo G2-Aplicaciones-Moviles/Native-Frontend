@@ -2,34 +2,13 @@ package pe.edu.upc.jameofit.iam.presentation.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,26 +31,33 @@ import pe.edu.upc.jameofit.ui.theme.JameoBlue
 
 @Composable
 fun Register(
-    viewmodel: AuthViewModel,
+    viewModel: AuthViewModel,
     goToLogin: () -> Unit,
     onRegisterSuccess: () -> Unit
 ) {
-
-    val user by viewmodel.user.collectAsState()
-    val loginSuccess by viewmodel.loginSuccess.collectAsState()
-    val errorMessage by viewmodel.errorMessage.collectAsState()
+    val user by viewModel.user.collectAsState()
+    val registerSuccess by viewModel.registerSuccess.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Estado para mostrar/ocultar contraseña
     var passwordVisible by remember { mutableStateOf(false) }
+    var isSubmitting by remember { mutableStateOf(false) }
 
-    // Navegación de éxito
-    LaunchedEffect(loginSuccess) {
-        if (loginSuccess == true) {
-            onRegisterSuccess()
-            viewmodel.resetLoginSuccess()
+    // Observa registerSuccess
+    LaunchedEffect(registerSuccess) {
+        when (registerSuccess) {
+            true -> {
+                isSubmitting = false
+                onRegisterSuccess()
+                viewModel.resetRegisterSuccess()
+            }
+            false -> {
+                isSubmitting = false
+                viewModel.resetRegisterSuccess()
+            }
+            null -> { /* nothing */ }
         }
     }
 
@@ -79,9 +65,11 @@ fun Register(
     LaunchedEffect(errorMessage) {
         if (!errorMessage.isNullOrBlank()) {
             scope.launch { snackbarHostState.showErrorOnce(errorMessage!!) }
-            viewmodel.resetErrorMessage()
+            viewModel.resetErrorMessage()
+            isSubmitting = false
         }
     }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -95,7 +83,7 @@ fun Register(
                 .padding(top = 80.dp, bottom = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo
+
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo de la aplicación",
@@ -124,7 +112,7 @@ fun Register(
                         contentDescription = "Icono de usuario"
                     )
                 },
-                onValueChange = { viewmodel.updateUsername(it) },
+                onValueChange = { viewModel.updateUsername(it) },
                 singleLine = true,
                 isError = !errorMessage.isNullOrBlank() && user.username.isBlank()
             )
@@ -144,13 +132,15 @@ fun Register(
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
-                            painter = painterResource(id = if (passwordVisible) R.drawable.visibility_24px else R.drawable.visibility_off_24px),
+                            painter = painterResource(
+                                id = if (passwordVisible) R.drawable.visibility_24px else R.drawable.visibility_off_24px
+                            ),
                             contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
                             tint = Color.Unspecified
                         )
                     }
                 },
-                onValueChange = { viewmodel.updatePassword(it) },
+                onValueChange = { viewModel.updatePassword(it) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
@@ -161,18 +151,18 @@ fun Register(
             )
 
             ElevatedButton(
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF099FE1)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF099FE1)),
                 modifier = Modifier
                     .padding(vertical = 16.dp)
                     .height(48.dp),
                 onClick = {
-                    viewmodel.register()
-                }
+                    isSubmitting = true
+                    viewModel.register(user) // <-- PASAMOS user al ViewModel
+                },
+                enabled = !isSubmitting
             ) {
                 Text(
-                    text = "Crear Cuenta",
+                    text = if (isSubmitting) "Creando cuenta..." else "Crear Cuenta",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.White
@@ -202,6 +192,7 @@ fun Register(
                 )
             }
         }
+
         ErrorSnackbarHost(hostState = snackbarHostState)
     }
 }

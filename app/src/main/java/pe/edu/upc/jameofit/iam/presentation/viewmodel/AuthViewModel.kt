@@ -5,136 +5,70 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import pe.edu.upc.jameofit.iam.data.repository.AuthRepository
 import pe.edu.upc.jameofit.iam.domain.model.User
+import pe.edu.upc.jameofit.iam.data.repository.AuthRepository
+import pe.edu.upc.jameofit.shared.data.local.JwtStorage
 
-class AuthViewModel(
-    private val authRepository: AuthRepository
-) : ViewModel() {
+class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
+
     private val _user = MutableStateFlow(User())
     val user: StateFlow<User> = _user
+
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading
 
     private val _loginSuccess = MutableStateFlow<Boolean?>(null)
     val loginSuccess: StateFlow<Boolean?> = _loginSuccess
 
+    private val _registerSuccess = MutableStateFlow<Boolean?>(null)
+    val registerSuccess: StateFlow<Boolean?> = _registerSuccess
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
-    private val _currentUserId = MutableStateFlow<Long?>(null)
-    val currentUserId: StateFlow<Long?> = _currentUserId
-
-    fun updateUsername(username: String) {
-        _user.value = _user.value.copy(username = username)
-    }
-
-    fun updatePassword(password: String) {
-        _user.value = _user.value.copy(password = password)
-    }
-
-    fun clearUser() {
-        _user.value = User()
-    }
-
-    fun login() {
-        val username = _user.value.username
-        val password = _user.value.password
-
-        if (username.isBlank() || username.length < 5) {
-            _errorMessage.value = "El nombre de usuario debe tener al menos 5 caracteres"
-            return
-        }
-        if (password.isBlank() || password.length < 3) {
-            _errorMessage.value = "La contraseña debe tener al menos 3 caracteres."
-            return
-        }
-
+    fun login(user: User, onSuccess: () -> Unit = {}, onError: () -> Unit = {}) {
+        _loading.value = true
         viewModelScope.launch {
-            try {
-                val ok = authRepository.login(_user.value)
-                _loginSuccess.value = ok
-                if (!ok) {
-                    _errorMessage.value = "Nombre de usuario o contraseña incorrectos."
-                } else {
-                    val uid = authRepository.currentUserId()
-                    if (uid == null) {
-                        _errorMessage.value =
-                            "Sesión iniciada, pero no se pudo leer el ID de usuario del token."
-                    } else {
-                        _currentUserId.value = uid
-                    }
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Error de autenticación: ${e.message}"
+            val result = repository.login(user)
+            _loading.value = false
+            if (result != null) {
+                _user.value = result  // 🚨 ahora usamos el User con id real
+                _loginSuccess.value = true
+                onSuccess()
+            } else {
                 _loginSuccess.value = false
+                _errorMessage.value = "Usuario o contraseña incorrectos"
+                onError()
+            }
+        }
+    }
+
+    fun register(user: User, onSuccess: () -> Unit = {}, onError: () -> Unit = {}) {
+        _loading.value = true
+        viewModelScope.launch {
+            val result = repository.register(user) // devuelve User con id real
+            _loading.value = false
+            if (result != null) {
+                _user.value = result  // ✅ usamos el id real
+                _registerSuccess.value = true
+                onSuccess()
+            } else {
+                _registerSuccess.value = false
+                _errorMessage.value = "No se pudo registrar"
+                onError()
             }
         }
     }
 
     fun logout() {
-        viewModelScope.launch {
-            authRepository.logout()
-            clearUser()
-            _currentUserId.value = null
-            _loginSuccess.value = null
-        }
+        JwtStorage.clearToken()
+        _user.value = User()
     }
 
-    fun register() {
-        val username = _user.value.username
-        val password = _user.value.password
+    fun resetLoginSuccess() { _loginSuccess.value = null }
+    fun resetRegisterSuccess() { _registerSuccess.value = null }
+    fun resetErrorMessage() { _errorMessage.value = null }
 
-        if (username.isBlank() || username.length < 5) {
-            _errorMessage.value = "El nombre de usuario debe tener al menos 5 caracteres"
-            return
-        }
-        if (password.isBlank() || password.length < 6) {
-            _errorMessage.value = "La contraseña debe tener al menos 6 caracteres."
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                val ok = authRepository.register(_user.value)
-                if (!ok) {
-                    _loginSuccess.value = false
-                    _errorMessage.value = "No se pudo registrar."
-                    return@launch
-                }
-
-                val uid = authRepository.currentUserId()
-                if (uid != null) _currentUserId.value = uid
-
-                _loginSuccess.value = true
-            } catch (e: Exception) {
-                _loginSuccess.value = false
-                _errorMessage.value = "Error de registro: ${e.message}"
-            }
-        }
-    }
-
-    fun resetLoginSuccess() {
-        _loginSuccess.value = null
-    }
-
-    fun resetErrorMessage() {
-        _errorMessage.value = null
-    }
-
-    init {
-        viewModelScope.launch {
-            val uid = authRepository.currentUserId()
-            if (uid != null) _currentUserId.value = uid
-        }
-    }
-
-    fun resolveUserIdFromToken() {
-        viewModelScope.launch {
-            val uid = authRepository.currentUserId()
-            _currentUserId.value = uid
-            if (uid == null) {
-                _errorMessage.value = "No se pudo obtener el ID de usuario del token."
-            }
-        }
-    }
-
+    fun updateUsername(value: String) { _user.value = _user.value.copy(username = value) }
+    fun updatePassword(value: String) { _user.value = _user.value.copy(password = value) }
 }

@@ -1,21 +1,18 @@
 package pe.edu.upc.jameofit.goals.presentation.view
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.runtime.*
-import androidx.compose.material3.*
-import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
-import pe.edu.upc.jameofit.shared.presentation.components.FullscreenLoader
 import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.goals.presentation.viewmodel.GoalsViewModel
+import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
+import pe.edu.upc.jameofit.shared.presentation.components.FullscreenLoader
+import pe.edu.upc.jameofit.shared.presentation.components.showErrorOnce
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,22 +21,19 @@ fun GoalsManagementRoute(
     goalsViewModel: GoalsViewModel,
     onBack: () -> Unit
 ) {
-    val userId by authViewModel.currentUserId.collectAsState()
+    val user by authViewModel.user.collectAsState()
+    val userId = user.id.takeIf { it != 0L }
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // 1) Resolver apenas entramos si no hay userId
-    LaunchedEffect(Unit) {
-        if (userId == null) authViewModel.resolveUserIdFromToken()
-    }
-
-    // 2) Loader con pequeño timeout para evitar error prematuro
     var timedOut by remember { mutableStateOf(false) }
+
     LaunchedEffect(userId) {
         if (userId == null) {
             timedOut = false
-            kotlinx.coroutines.delay(600) // ajusta si quieres (500–800ms)
-            if (authViewModel.currentUserId.value == null) timedOut = true
+            kotlinx.coroutines.delay(600)
+            if (authViewModel.user.value.id == 0L) timedOut = true
         } else {
             timedOut = false
         }
@@ -48,16 +42,14 @@ fun GoalsManagementRoute(
     when {
         userId != null -> {
             GoalsManagement(
-                userId = userId!!,              // tu firma actual lo usa
+                userId = userId,
                 viewmodel = goalsViewModel,
                 onBack = onBack
             )
         }
-
         !timedOut -> {
             FullscreenLoader(visible = true)
         }
-
         else -> {
             Scaffold(
                 snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -94,10 +86,6 @@ fun GoalsManagementRoute(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedButton(onClick = onBack) { Text("Volver") }
-                        Button(onClick = {
-                            scope.launch { snackbarHostState.showSnackbar("Reintentando…") }
-                            authViewModel.resolveUserIdFromToken()
-                        }) { Text("Reintentar") }
                     }
                 }
             }

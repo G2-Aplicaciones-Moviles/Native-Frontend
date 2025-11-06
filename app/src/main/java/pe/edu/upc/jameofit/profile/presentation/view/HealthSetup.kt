@@ -1,84 +1,49 @@
 package pe.edu.upc.jameofit.profile.presentation.view
 
 import android.content.Context
-import android.content.SharedPreferences
+import android.os.Build
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 import pe.edu.upc.jameofit.goals.model.ObjectiveType
-import pe.edu.upc.jameofit.goals.model.PaceType
-import pe.edu.upc.jameofit.goals.presentation.viewmodel.GoalsViewModel
+import pe.edu.upc.jameofit.profile.domain.model.UserProfileRequest
+import pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileSetupUiState
+import pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileSetupViewModel
 import pe.edu.upc.jameofit.shared.presentation.components.FullscreenLoader
 
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HealthSetup(
     userId: Long,
-    viewModel: GoalsViewModel,
+    viewModel: ProfileSetupViewModel,
     onNext: () -> Unit,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val pref = remember { context.getSharedPreferences("pref_profile", Context.MODE_PRIVATE) }
 
-    val pref: SharedPreferences = remember {
-        context.getSharedPreferences("pref_health_profile", Context.MODE_PRIVATE)
-    }
+    val uiState by viewModel.uiState.collectAsState()
 
-    var txtObj by remember { mutableStateOf("") }
-    var txtAct by remember { mutableStateOf("") }
-    var expandedObj by remember { mutableStateOf(false) }
-    var expandedAct by remember { mutableStateOf(false) }
+    var txtObj by remember { mutableStateOf(pref.getString("objetivo", "") ?: "") }
+    var txtAct by remember { mutableStateOf(pref.getString("nivel_actividad", "") ?: "") }
 
-    // Observar estados del ViewModel
-    val isLoading by viewModel.isLoading.collectAsState()
-    val goalSaveSuccess by viewModel.goalSaveSuccess.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-
-    // Mapeo de objetivos UI -> Domain (IGUAL que en GoalsManagement)
-    val objectiveMap = mapOf(
+    val objetivosMap = mapOf(
         "Bajar de peso" to ObjectiveType.LOSE_WEIGHT,
         "Mantener el peso" to ObjectiveType.MAINTAIN_WEIGHT,
         "Ganar masa muscular" to ObjectiveType.GAIN_MUSCLE
     )
-
-    val objetivos = listOf(
-        "Bajar de peso",
-        "Mantener el peso",
-        "Ganar masa muscular"
-    )
+    val objetivos = objetivosMap.keys.toList()
 
     val nivelesActividad = listOf(
         "Sedentario",
@@ -88,143 +53,94 @@ fun HealthSetup(
         "Extremadamente Activo"
     )
 
-    // Manejar éxito del guardado
-    LaunchedEffect(goalSaveSuccess) {
-        if (goalSaveSuccess == true) {
-            Toast.makeText(context, "Perfil guardado exitosamente", Toast.LENGTH_SHORT).show()
-            viewModel.resetGoalSaveSuccess()
-            onNext()
+    // Observar el estado
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is ProfileSetupUiState.Success -> {
+                Toast.makeText(context, "¡Perfil creado exitosamente!", Toast.LENGTH_SHORT).show()
+                viewModel.reset()
+                onNext()
+            }
+            is ProfileSetupUiState.Error -> {
+                Toast.makeText(context, "Error: ${state.message}", Toast.LENGTH_LONG).show()
+                viewModel.reset()
+            }
+            else -> {}
         }
     }
 
-    // Manejar errores
-    LaunchedEffect(errorMessage) {
-        if (!errorMessage.isNullOrBlank()) {
-            Toast.makeText(context, "Error: $errorMessage", Toast.LENGTH_LONG).show()
-            viewModel.resetErrorMessage()
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         IconButton(
             onClick = onBack,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
+            modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Regresar",
-                tint = Color.Black
-            )
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
         }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 30.dp)
-                .padding(top = 20.dp, bottom = 20.dp),
-            verticalArrangement = Arrangement.Center,
+                .padding(top = 60.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Completa tu información para recibir sugerencias personalizadas",
-                fontWeight = FontWeight.Normal,
+                text = "Completa tu información de salud",
                 fontSize = 20.sp,
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(5.dp)
+                modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Dropdown de Objetivo
-            Box {
+            // DROPDOWN OBJETIVO
+            var expandedObj by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = expandedObj,
+                onExpandedChange = { expandedObj = !expandedObj }
+            ) {
                 OutlinedTextField(
                     value = txtObj,
-                    onValueChange = { },
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    label = { Text(text = "Objetivo") },
-                    placeholder = { Text(text = "Selecciona tu objetivo") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            tint = Color.Gray,
-                            contentDescription = "Icono de objetivo"
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { expandedObj = !expandedObj }) {
-                            Icon(
-                                imageVector = if (expandedObj) Icons.Default.KeyboardArrowUp
-                                else Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Dropdown arrow",
-                                tint = Color.Gray
-                            )
-                        }
-                    },
+                    onValueChange = {},
+                    label = { Text("Objetivo") },
                     readOnly = true,
-                    singleLine = true
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-
-                DropdownMenu(
+                ExposedDropdownMenu(
                     expanded = expandedObj,
                     onDismissRequest = { expandedObj = false }
                 ) {
                     objetivos.forEach { objetivo ->
                         DropdownMenuItem(
-                            text = { Text(text = objetivo, fontSize = 16.sp) },
+                            text = { Text(objetivo) },
                             onClick = {
                                 txtObj = objetivo
                                 expandedObj = false
-                                // Actualizar el ViewModel
-                                objectiveMap[objetivo]?.let {
-                                    viewModel.selectObjective(it)
-                                }
                             }
                         )
                     }
                 }
             }
 
-            // Dropdown de Nivel de Actividad
-            Box {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // DROPDOWN NIVEL DE ACTIVIDAD
+            var expandedAct by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = expandedAct,
+                onExpandedChange = { expandedAct = !expandedAct }
+            ) {
                 OutlinedTextField(
                     value = txtAct,
-                    onValueChange = { },
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    label = { Text(text = "Nivel de Actividad") },
-                    placeholder = { Text(text = "Selecciona tu nivel de actividad") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Favorite,
-                            tint = Color.Gray,
-                            contentDescription = "Icono de actividad"
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { expandedAct = !expandedAct }) {
-                            Icon(
-                                imageVector = if (expandedAct) Icons.Default.KeyboardArrowUp
-                                else Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Dropdown arrow",
-                                tint = Color.Gray
-                            )
-                        }
-                    },
+                    onValueChange = {},
+                    label = { Text("Nivel de actividad") },
                     readOnly = true,
-                    singleLine = true
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-
-                DropdownMenu(
+                ExposedDropdownMenu(
                     expanded = expandedAct,
                     onDismissRequest = { expandedAct = false }
                 ) {
                     nivelesActividad.forEach { nivel ->
                         DropdownMenuItem(
-                            text = { Text(text = nivel, fontSize = 16.sp) },
+                            text = { Text(nivel) },
                             onClick = {
                                 txtAct = nivel
                                 expandedAct = false
@@ -234,57 +150,59 @@ fun HealthSetup(
                 }
             }
 
-            Text(
-                text = "Recuerda que puedes editar tu perfil más adelante",
-                fontWeight = FontWeight.Normal,
-                fontSize = 16.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(5.dp)
-            )
+            Spacer(modifier = Modifier.height(24.dp))
 
             ElevatedButton(
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF099FE1)
-                ),
-                modifier = Modifier
-                    .padding(vertical = 16.dp)
-                    .height(48.dp),
-                enabled = !isLoading,
                 onClick = {
-                    if (txtObj.trim().isNotEmpty() && txtAct.trim().isNotEmpty()) {
-                        // Guardar en SharedPreferences (para mantener compatibilidad)
-                        pref.edit()
-                            .putString("objetivo", txtObj.trim())
-                            .putString("nivel_actividad", txtAct.trim())
-                            .putLong("health_profile_updated", System.currentTimeMillis())
-                            .putBoolean("health_profile_completed", true)
-                            .apply()
-
-                        // ✅ GUARDAR CON PARÁMETROS OVERRIDE
-                        viewModel.saveGoalCalories(
-                            userId = userId,
-                            overrideWeight = 70.0,
-                            overridePace = PaceType.MODERATE
-                        )
-                    } else {
-                        Toast.makeText(
-                            context,
-                            "Por favor completa todos los campos",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                    if (txtObj.isBlank() || txtAct.isBlank()) {
+                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                        return@ElevatedButton
                     }
-                }
+
+                    // Guardar objetivo y nivel
+                    pref.edit {
+                        putString("objetivo", txtObj)
+                        putString("nivel_actividad", txtAct)
+                    }
+
+                    // Leer todos los datos guardados
+                    val height = pref.getString("height", "1.70")?.toDoubleOrNull() ?: 1.70
+                    val weight = pref.getString("peso", "70")?.toDoubleOrNull() ?: 70.0
+                    val birthDate = pref.getString("birthDate", "2000-01-01") ?: "2000-01-01"
+                    val gender = pref.getString("gender", "MALE") ?: "MALE"
+
+                    val selectedObjectiveId = when (objetivosMap[txtObj]) {
+                        ObjectiveType.LOSE_WEIGHT -> 1
+                        ObjectiveType.MAINTAIN_WEIGHT -> 2
+                        ObjectiveType.GAIN_MUSCLE -> 3
+                        else -> 2
+                    }
+
+                    val selectedActivityId = (nivelesActividad.indexOf(txtAct).takeIf { it >= 0 }?.plus(1)) ?: 1
+
+                    // Crear el request completo
+                    val request = UserProfileRequest(
+                        userId = userId,
+                        gender = gender,
+                        height = height,
+                        weight = weight,
+                        userScore = 30,
+                        activityLevelId = selectedActivityId,
+                        objectiveId = selectedObjectiveId,
+                        allergyIds = emptyList(),
+                        birthDate = birthDate
+                    )
+
+                    // Llamar al ViewModel para crear todo
+                    viewModel.createCompleteProfile(request, context)
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                enabled = uiState !is ProfileSetupUiState.Loading
             ) {
-                Text(
-                    text = if (isLoading) "Guardando..." else "Continuar",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal
-                )
+                Text(if (uiState is ProfileSetupUiState.Loading) "Creando perfil..." else "Continuar")
             }
         }
 
-        // Loader
-        FullscreenLoader(visible = isLoading)
+        FullscreenLoader(visible = uiState is ProfileSetupUiState.Loading)
     }
 }

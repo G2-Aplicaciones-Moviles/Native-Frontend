@@ -1,16 +1,21 @@
 package pe.edu.upc.jameofit.home.presentation.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import pe.edu.upc.jameofit.home.presentation.scaffold.HomeScaffold
 import pe.edu.upc.jameofit.tracking.presentation.view.TrackingHomeScreen
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -22,7 +27,8 @@ import pe.edu.upc.jameofit.goals.presentation.view.GoalsManagementRoute
 import pe.edu.upc.jameofit.goals.presentation.viewmodel.GoalsViewModel
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.goals.presentation.di.PresentationModule as GoalsPresentationModule
-import pe.edu.upc.jameofit.iam.presentation.di.PresentationModule as IamPresentationModule
+import pe.edu.upc.jameofit.profile.presentation.di.PresentationModule as ProfilePresentationModule
+import pe.edu.upc.jameofit.profile.presentation.view.HealthSetupRoute
 import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanScreen
 import pe.edu.upc.jameofit.recipe.presentation.view.BreakfastScreen
@@ -31,6 +37,16 @@ import pe.edu.upc.jameofit.recipe.presentation.view.DinnerScreen
 import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.BreakfastRecipeDetailScreen
 import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.DinnerRecipeDetailScreen
 import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.LunchRecipeDetailScreen
+import pe.edu.upc.jameofit.tracking.data.remote.TrackingService
+import pe.edu.upc.jameofit.tracking.data.repository.TrackingRepository
+import pe.edu.upc.jameofit.tracking.presentation.viewmodel.TrackingViewModel
+import pe.edu.upc.jameofit.shared.data.di.SharedDataModule
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Alignment
 
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
@@ -59,12 +75,17 @@ private fun toTabOf(route: String?): String? = when {
     else -> null
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeNavHost(
     navController: NavHostController,
+    authViewModel: AuthViewModel,
     onRequestLogout: () -> Unit = {}
 ) {
-    val backStackEntry = navController.currentBackStackEntryAsState().value
+    // ✅ Crear un NavController independiente para HomeNavHost
+    val homeNavController = rememberNavController()
+
+    val backStackEntry = homeNavController.currentBackStackEntryAsState().value
     val currentRoute = backStackEntry?.destination?.route ?: HomeRoute.TRACKING
     val currentTab = toTabOf(currentRoute)
     val topTitle = titleForRoute(currentRoute)
@@ -109,13 +130,13 @@ fun HomeNavHost(
                 else -> false
             }
             if (isDrawer) {
-                navController.popBackStack(
+                homeNavController.popBackStack(
                     route = HomeGraph.ROUTE,
                     inclusive = false
                 )
             }
 
-            navController.navigate(target) {
+            homeNavController.navigate(target) {
                 popUpTo(HomeGraph.ROUTE) { saveState = true }
                 launchSingleTop = true
                 restoreState = true
@@ -123,14 +144,14 @@ fun HomeNavHost(
         },
         onNavigateDrawer = { drawerRoute ->
             if (currentRoute != drawerRoute) {
-                navController.navigate(drawerRoute) { launchSingleTop = true }
+                homeNavController.navigate(drawerRoute) { launchSingleTop = true }
             }
         },
         onRequestLogout = onRequestLogout,
         topTitle = topTitle
     ) { paddingModifier ->
         NavHost(
-            navController = navController,
+            navController = homeNavController,  // ✅ Usar el nuevo navController
             startDestination = TabGraph.TRACKING,
             route = HomeGraph.ROUTE,
             modifier = paddingModifier
@@ -140,10 +161,27 @@ fun HomeNavHost(
                 route = TabGraph.TRACKING
             ) {
                 composable(HomeRoute.TRACKING) {
+                    val trackingVm: TrackingViewModel = viewModel(
+                        factory = object : ViewModelProvider.Factory {
+                            @Suppress("UNCHECKED_CAST")
+                            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                val trackingService = SharedDataModule.getRetrofit().create(TrackingService::class.java)
+                                val trackingRepo = TrackingRepository(trackingService)
+                                return TrackingViewModel(trackingRepo) as T
+                            }
+                        }
+                    )
+
+                    val authUser by authViewModel.user.collectAsState()
+                    val userId = authUser.id
+
                     TrackingHomeScreen(
-                        onOpenRecentActivity = { navController.navigate(TrackingRoute.MEAL_ACTIVITY) },
-                        onOpenWeeklyProgress = { navController.navigate(TrackingRoute.WEEKLY_PROGRESS) },
-                        onOpenTips = { navController.navigate(TabGraph.TIPS) }
+                        viewModel = trackingVm,
+                        authViewModel = authViewModel,
+                        userId = userId,
+                        onOpenRecentActivity = { homeNavController.navigate(TrackingRoute.MEAL_ACTIVITY) },
+                        onOpenWeeklyProgress = { homeNavController.navigate(TrackingRoute.WEEKLY_PROGRESS) },
+                        onOpenTips = { homeNavController.navigate(TabGraph.TIPS) }
                     )
                 }
                 composable(TrackingRoute.MEAL_ACTIVITY) { PlaceholderScreen("Actividad reciente") }
@@ -162,7 +200,7 @@ fun HomeNavHost(
 
                     pe.edu.upc.jameofit.recommendations.presentation.view.RecommendationsRoute(
                         recommendationsViewModel = recVm,
-                        onBack = { navController.popBackStack() }
+                        onBack = { homeNavController.popBackStack() }
                     )
                 }
             }
@@ -181,18 +219,46 @@ fun HomeNavHost(
                 composable(HomeRoute.NUTRITIONISTS) { NutritionistsScreen() }
             }
 
-            // Drawer destinations
-            composable(DrawerRoute.PROFILE) { PlaceholderScreen("Perfil") }
-            composable(DrawerRoute.GOALS) {
-                val authVm: AuthViewModel = viewModel(
-                    factory = object : ViewModelProvider.Factory {
-                        @Suppress("UNCHECKED_CAST")
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            return IamPresentationModule.getAuthViewModel() as T
-                        }
-                    }
-                )
+            composable(DrawerRoute.PROFILE) {
+                // Pantalla temporal de perfil
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val authUser by authViewModel.user.collectAsState()
 
+                    Text(
+                        text = "Mi Perfil",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    Text(
+                        text = "Usuario: ${authUser.username}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    Text(
+                        text = "ID: ${authUser.id}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "Pantalla de perfil en desarrollo",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            composable(DrawerRoute.GOALS) {
                 val goalsVm: GoalsViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
                         @Suppress("UNCHECKED_CAST")
@@ -203,11 +269,12 @@ fun HomeNavHost(
                 )
 
                 GoalsManagementRoute(
-                    authViewModel = authVm,
+                    authViewModel = authViewModel,
                     goalsViewModel = goalsVm,
-                    onBack = { navController.popBackStack() }
+                    onBack = { homeNavController.popBackStack() }
                 )
             }
+
             composable(DrawerRoute.RECOMMENDATIONS) {
                 val recVm = remember {
                     pe.edu.upc.jameofit.recommendations.presentation.di.PresentationModule.getRecommendationsViewModel()
@@ -215,32 +282,23 @@ fun HomeNavHost(
 
                 pe.edu.upc.jameofit.recommendations.presentation.view.RecommendationsRoute(
                     recommendationsViewModel = recVm,
-                    onBack = { navController.popBackStack() }
+                    onBack = { homeNavController.popBackStack() }
                 )
             }
 
             composable(DrawerRoute.PROGRESS) { PlaceholderScreen("Analíticas y estadísticas") }
-
-            // Meal plan entry
-            composable(DrawerRoute.MEAL_PLANS) { MealPlanScreen(navController = navController) }
-
+            composable(DrawerRoute.MEAL_PLANS) { MealPlanScreen(navController = homeNavController) }
             composable(DrawerRoute.SUBSCRIPTIONS) { PlaceholderScreen("Suscripciones") }
             composable(DrawerRoute.FAQ) { FaqScreen() }
             composable(DrawerRoute.SETTINGS) { PlaceholderScreen("Ajustes") }
 
-            composable(RecipeRoute.BREAKFAST) { BreakfastScreen(navController = navController) }
-            composable(RecipeRoute.LUNCH) { LunchScreen(navController = navController) }
-            composable(RecipeRoute.DINNER) { DinnerScreen(navController = navController) }
+            composable(RecipeRoute.BREAKFAST) { BreakfastScreen(navController = homeNavController) }
+            composable(RecipeRoute.LUNCH) { LunchScreen(navController = homeNavController) }
+            composable(RecipeRoute.DINNER) { DinnerScreen(navController = homeNavController) }
 
-            composable(RecipeRoute.BREAKFAST_DETAIL) {
-                BreakfastRecipeDetailScreen()
-            }
-            composable(RecipeRoute.LUNCH_DETAIL) {
-                LunchRecipeDetailScreen()
-            }
-            composable(RecipeRoute.DINNER_DETAIL) {
-                DinnerRecipeDetailScreen()
-            }
+            composable(RecipeRoute.BREAKFAST_DETAIL) { BreakfastRecipeDetailScreen() }
+            composable(RecipeRoute.LUNCH_DETAIL) { LunchRecipeDetailScreen() }
+            composable(RecipeRoute.DINNER_DETAIL) { DinnerRecipeDetailScreen() }
         }
     }
 }
