@@ -47,6 +47,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Alignment
+import pe.edu.upc.jameofit.mealplan.presentation.di.PresentationModule.getMealPlanViewModel
+import pe.edu.upc.jameofit.mealplan.presentation.view.AddRecipeToMealPlanScreen
+import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanCreateScreen
+import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanDetailScreen
+import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
@@ -287,7 +292,82 @@ fun HomeNavHost(
             }
 
             composable(DrawerRoute.PROGRESS) { PlaceholderScreen("Analíticas y estadísticas") }
-            composable(DrawerRoute.MEAL_PLANS) { MealPlanScreen(navController = homeNavController) }
+            composable(DrawerRoute.MEAL_PLANS) {
+                val mealPlanVm: MealPlanViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getMealPlanViewModel() as T
+                        }
+                    }
+                )
+
+                MealPlanScreen(
+                    navController = homeNavController,
+                    viewModel = mealPlanVm
+                )
+            }
+
+            composable(DrawerRoute.MEAL_PLAN_CREATE) {
+                val mealPlanVm: MealPlanViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getMealPlanViewModel() as T
+                        }
+                    }
+                )
+
+                MealPlanCreateScreen(
+                    viewModel = mealPlanVm,
+                    onMealPlanCreated = { homeNavController.popBackStack() }
+                )
+
+            }
+
+            composable(
+                route = DrawerRoute.MEAL_PLAN_DETAIL
+            ) { backStackEntry ->
+                val mealPlanId = backStackEntry.arguments?.getString("mealPlanId")?.toLongOrNull() ?: 0L
+
+                val mealPlanVm: MealPlanViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getMealPlanViewModel() as T
+                        }
+                    }
+                )
+
+                MealPlanDetailScreen(
+                    mealPlanId = mealPlanId,
+                    viewModel = mealPlanVm,
+                    navController = homeNavController
+                )
+            }
+
+            composable(
+                route = DrawerRoute.ADD_RECIPE_TO_MEAL_PLAN
+            ) { backStackEntry ->
+                val mealPlanId = backStackEntry.arguments?.getString("mealPlanId")?.toLongOrNull() ?: 0L
+
+                val mealPlanVm: MealPlanViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getMealPlanViewModel() as T
+                        }
+                    }
+                )
+
+                AddRecipeToMealPlanScreen(
+                    mealPlanId = mealPlanId,
+                    viewModel = mealPlanVm,
+                    onRecipeAdded = { homeNavController.popBackStack() },
+                    onCancel = { homeNavController.popBackStack() }
+                )
+            }
+
             composable(DrawerRoute.SUBSCRIPTIONS) { PlaceholderScreen("Suscripciones") }
             composable(DrawerRoute.FAQ) { FaqScreen() }
             composable(DrawerRoute.SETTINGS) { PlaceholderScreen("Ajustes") }
