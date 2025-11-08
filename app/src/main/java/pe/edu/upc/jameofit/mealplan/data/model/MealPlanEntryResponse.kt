@@ -6,6 +6,6 @@ data class MealPlanEntryResponse(
     val recipeName: String?,
     val recipeDescription: String?,
     val day: Int,
-    val mealPlanTypeId: Int,
+    val mealPlanType: Int,
     val mealPlanId: Int
 )

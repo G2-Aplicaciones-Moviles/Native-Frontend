@@ -10,4 +10,11 @@ class ProfileRepository(private val service: ProfileService) {
         if (resp.isSuccessful) return resp.body()
         throw IllegalStateException("Failed creating profile: ${resp.code()} ${resp.errorBody()?.string()}")
     }
+
+    suspend fun getUserProfile(profileId: Long): UserProfileResponse? {
+        val resp = service.getUserProfile(profileId)
+        if (resp.isSuccessful) return resp.body()
+        if (resp.code() == 404) return null
+        throw IllegalStateException("Failed get profile: ${resp.code()}")
+    }
 }

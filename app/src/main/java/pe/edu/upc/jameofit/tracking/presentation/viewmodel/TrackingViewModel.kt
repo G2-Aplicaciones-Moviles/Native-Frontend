@@ -8,9 +8,14 @@ import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.tracking.data.repository.TrackingRepository
 import pe.edu.upc.jameofit.tracking.data.model.TrackingResponse
 import pe.edu.upc.jameofit.tracking.data.model.TrackingProgressResponse
+import pe.edu.upc.jameofit.mealplan.data.repository.MealPlanRepository
+import pe.edu.upc.jameofit.mealplan.data.model.MealPlanEntryResponse
+import pe.edu.upc.jameofit.profile.data.repository.ProfileRepository
 
 class TrackingViewModel(
-    private val repository: TrackingRepository
+    private val trackingRepository: TrackingRepository,
+    private val mealPlanRepository: MealPlanRepository,
+    private val profileRepository: ProfileRepository
 ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
@@ -22,18 +27,22 @@ class TrackingViewModel(
     private val _tracking = MutableStateFlow<TrackingResponse?>(null)
     val tracking: StateFlow<TrackingResponse?> = _tracking
 
-    // ✅ NUEVO: Estado para el progreso
     private val _progress = MutableStateFlow<TrackingProgressResponse?>(null)
     val progress: StateFlow<TrackingProgressResponse?> = _progress
 
-    /**
-     * Crea tracking goal desde profile (llama al backend)
-     */
+    // ✅ NUEVO: Estado para comidas recientes
+    private val _recentMeals = MutableStateFlow<List<MealPlanEntryResponse>>(emptyList())
+    val recentMeals: StateFlow<List<MealPlanEntryResponse>> = _recentMeals
+
+    // ✅ NUEVO: Indica si el usuario tiene meal plan
+    private val _hasMealPlan = MutableStateFlow(false)
+    val hasMealPlan: StateFlow<Boolean> = _hasMealPlan
+
     fun createGoalFromProfile(profileId: Long, onResult: (Boolean, String?) -> Unit = { _, _ -> }) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                repository.createGoalFromProfile(profileId)
+                trackingRepository.createGoalFromProfile(profileId)
                 onResult(true, null)
             } catch (e: Exception) {
                 _error.value = e.message
@@ -44,14 +53,11 @@ class TrackingViewModel(
         }
     }
 
-    /**
-     * Crea tracking (vincula userId -> tracking)
-     */
     fun createTracking(userId: Long, onResult: (Boolean, String?) -> Unit = { _, _ -> }) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                repository.createTracking(userId)
+                trackingRepository.createTracking(userId)
                 onResult(true, null)
             } catch (e: Exception) {
                 _error.value = e.message
@@ -62,15 +68,12 @@ class TrackingViewModel(
         }
     }
 
-    /**
-     * Carga el tracking por userId
-     */
     fun loadTrackingByUserId(userId: Long, onDone: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             try {
-                val result = repository.getTrackingByUserId(userId)
+                val result = trackingRepository.getTrackingByUserId(userId)
                 _tracking.value = result
                 onDone(true)
             } catch (e: Exception) {
@@ -82,13 +85,12 @@ class TrackingViewModel(
         }
     }
 
-
     fun loadProgress(userId: Long) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             try {
-                val result = repository.getTrackingProgress(userId)
+                val result = trackingRepository.getTrackingProgress(userId)
                 _progress.value = result
             } catch (e: Exception) {
                 _error.value = e.message
@@ -98,5 +100,44 @@ class TrackingViewModel(
         }
     }
 
-    fun resetError() { _error.value = null }
+    // ✅ NUEVO: Cargar actividad reciente del meal plan
+    fun loadRecentActivity(userId: Long) {
+        viewModelScope.launch {
+            try {
+                // 1. Obtener profile del usuario (asumiendo profileId = userId)
+                val profile = profileRepository.getUserProfile(userId)
+
+                if (profile != null) {
+                    // 2. Buscar meal plan activo del profile
+                    val currentMealPlan = mealPlanRepository.getCurrentMealPlanByProfile(profile.id)
+
+                    if (currentMealPlan != null) {
+                        // 3. Obtener entries con nombres de recetas
+                        val entries = mealPlanRepository.getDetailedEntries(currentMealPlan.id)
+
+                        // Mostrar las últimas 5 comidas, más recientes primero
+                        _recentMeals.value = entries.takeLast(5).reversed()
+                        _hasMealPlan.value = true
+                    } else {
+                        // No tiene meal plan activo
+                        _recentMeals.value = emptyList()
+                        _hasMealPlan.value = false
+                    }
+                } else {
+                    // No se encontró el perfil
+                    _error.value = "No se encontró el perfil del usuario"
+                    _recentMeals.value = emptyList()
+                    _hasMealPlan.value = false
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+                _recentMeals.value = emptyList()
+                _hasMealPlan.value = false
+            }
+        }
+    }
+
+    fun resetError() {
+        _error.value = null
+    }
 }

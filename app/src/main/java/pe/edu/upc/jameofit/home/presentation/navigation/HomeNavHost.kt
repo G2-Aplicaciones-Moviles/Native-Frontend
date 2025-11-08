@@ -52,6 +52,7 @@ import pe.edu.upc.jameofit.mealplan.presentation.view.AddRecipeToMealPlanScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanCreateScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanDetailScreen
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
+import pe.edu.upc.jameofit.tracking.presentation.view.MealActivityScreen
 
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
@@ -156,7 +157,7 @@ fun HomeNavHost(
         topTitle = topTitle
     ) { paddingModifier ->
         NavHost(
-            navController = homeNavController,  // ✅ Usar el nuevo navController
+            navController = homeNavController,
             startDestination = TabGraph.TRACKING,
             route = HomeGraph.ROUTE,
             modifier = paddingModifier
@@ -170,9 +171,7 @@ fun HomeNavHost(
                         factory = object : ViewModelProvider.Factory {
                             @Suppress("UNCHECKED_CAST")
                             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                val trackingService = SharedDataModule.getRetrofit().create(TrackingService::class.java)
-                                val trackingRepo = TrackingRepository(trackingService)
-                                return TrackingViewModel(trackingRepo) as T
+                                return pe.edu.upc.jameofit.tracking.presentation.di.PresentationModule.getTrackingViewModel() as T
                             }
                         }
                     )
@@ -189,7 +188,25 @@ fun HomeNavHost(
                         onOpenTips = { homeNavController.navigate(TabGraph.TIPS) }
                     )
                 }
-                composable(TrackingRoute.MEAL_ACTIVITY) { PlaceholderScreen("Actividad reciente") }
+                composable(TrackingRoute.MEAL_ACTIVITY) {
+                    val trackingVm: TrackingViewModel = viewModel(
+                        factory = object : ViewModelProvider.Factory {
+                            @Suppress("UNCHECKED_CAST")
+                            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                return pe.edu.upc.jameofit.tracking.presentation.di.PresentationModule.getTrackingViewModel() as T
+                            }
+                        }
+                    )
+
+                    val authUser by authViewModel.user.collectAsState()
+                    val userId = authUser.id
+
+                    MealActivityScreen(
+                        viewModel = trackingVm,
+                        userId = userId,
+                        onBack = { homeNavController.popBackStack() }
+                    )
+                }
                 composable(TrackingRoute.WEEKLY_PROGRESS) { PlaceholderScreen("Progreso semanal") }
                 composable(TrackingRoute.TIP_DETAIL) { PlaceholderScreen("Detalle del tip") }
             }

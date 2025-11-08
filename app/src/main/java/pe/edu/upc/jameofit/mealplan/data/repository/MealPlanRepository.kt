@@ -43,4 +43,20 @@ class MealPlanRepository(
         val response = api.deleteMealPlan(mealPlanId)
         response.isSuccessful
     }
+
+    // ✅ NUEVO: Obtener entries detallados (con nombres de recetas)
+    suspend fun getDetailedEntries(mealPlanId: Int): List<MealPlanEntryResponse> = withContext(Dispatchers.IO) {
+        val response = api.getEntriesWithRecipeInfo(mealPlanId.toLong())
+        if (response.isSuccessful) {
+            response.body() ?: emptyList()
+        } else {
+            emptyList()
+        }
+    }
+
+    // ✅ NUEVO: Obtener meal plan activo de un profile
+    suspend fun getCurrentMealPlanByProfile(profileId: Long): MealPlanResponse? = withContext(Dispatchers.IO) {
+        val allPlans = getAllMealPlans()
+        allPlans?.find { it.profileId == profileId && it.isCurrent }
+    }
 }

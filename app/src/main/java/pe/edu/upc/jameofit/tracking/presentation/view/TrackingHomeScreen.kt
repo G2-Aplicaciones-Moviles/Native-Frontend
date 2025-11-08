@@ -1,11 +1,12 @@
 package pe.edu.upc.jameofit.tracking.presentation.view
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -13,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
+import pe.edu.upc.jameofit.mealplan.data.model.MealPlanEntryResponse
+import pe.edu.upc.jameofit.tracking.presentation.utils.getMealTypeName
 import pe.edu.upc.jameofit.ui.theme.JameoGreen
 import pe.edu.upc.jameofit.tracking.presentation.viewmodel.TrackingViewModel
 
@@ -29,12 +32,15 @@ fun TrackingHomeScreen(
     val progress by viewModel.progress.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val username by authViewModel.user.collectAsState()
+    val recentMeals by viewModel.recentMeals.collectAsState()
+    val hasMealPlan by viewModel.hasMealPlan.collectAsState()
 
     // ✅ Cargar datos al montar la pantalla
     LaunchedEffect(userId) {
         if (userId > 0) {
             viewModel.loadTrackingByUserId(userId)
             viewModel.loadProgress(userId)
+            viewModel.loadRecentActivity(userId)
         }
     }
 
@@ -63,7 +69,7 @@ fun TrackingHomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(24.dp),
-                    contentAlignment = androidx.compose.ui.Alignment.Center
+                    contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
                 }
@@ -129,11 +135,86 @@ fun TrackingHomeScreen(
                     } else "—",
                     modifier = Modifier.weight(1f)
                 )
-                StatCard(
-                    title = "Tips",
-                    value = "0",
-                    modifier = Modifier.weight(1f)
+            }
+        }
+        item {
+            Spacer(Modifier.height(24.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Actividad reciente",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
+                if (hasMealPlan && recentMeals.isNotEmpty()) {
+                    TextButton(onClick = onOpenRecentActivity) {
+                        Text("Ver Todo", color=JameoGreen)
+                    }
+                }
+            }
+        }
+
+        // Lista de comidas
+        if (!hasMealPlan) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "Aún no tienes un meal plan creado",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Crea tu plan personalizado para ver tu actividad",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        } else if (recentMeals.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No hay comidas registradas en tu plan",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        } else {
+            items(recentMeals) { meal ->
+                RecentMealCard(meal = meal)
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
@@ -174,6 +255,36 @@ private fun StatCard(title: String, value: String, modifier: Modifier = Modifier
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = JameoGreen
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecentMealCard(meal: MealPlanEntryResponse) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = meal.recipeName ?: "Comida sin nombre",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = getMealTypeName(meal.mealPlanType),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

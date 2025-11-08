@@ -9,31 +9,31 @@ import retrofit2.http.*
 
 interface MealPlanService {
 
-    @GET("meal-plan")
+    @GET("/api/v1/meal-plan")
     suspend fun getAllMealPlans(): Response<List<MealPlanResponse>>
 
-    @GET("meal-plan/{mealPlanId}")
+    @GET("/api/v1/meal-plan/{mealPlanId}")
     suspend fun getMealPlanById(
         @Path("mealPlanId") mealPlanId: Long
     ): Response<MealPlanResponse>
 
-    @GET("meal-plan/detailed/{mealPlanId}")
+    @GET("/api/v1/meal-plan/detailed/{mealPlanId}")
     suspend fun getEntriesWithRecipeInfo(
         @Path("mealPlanId") mealPlanId: Long
     ): Response<List<MealPlanEntryResponse>>
 
-    @POST("meal-plan")
+    @POST("/api/v1/meal-plan")
     suspend fun createMealPlan(
         @Body request: CreateMealPlanRequest
     ): Response<MealPlanResponse>
 
-    @POST("meal-plan/{mealPlanId}/entries")
+    @POST("/api/v1/meal-plan/{mealPlanId}/entries")
     suspend fun addEntryToMealPlan(
         @Path("mealPlanId") mealPlanId: Long,
         @Body request: AddRecipeRequest
     ): Response<Unit>
 
-    @DELETE("meal-plan/{mealPlanId}")
+    @DELETE("/api/v1/meal-plan/{mealPlanId}")
     suspend fun deleteMealPlan(
         @Path("mealPlanId") mealPlanId: Long
     ): Response<Unit>
