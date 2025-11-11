@@ -8,7 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,35 +17,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.R
 import pe.edu.upc.jameofit.home.presentation.navigation.RecipeRoute
-
-data class RecipeCategory(
-    val title: String,
-    val imageRes: Int,
-    val route: String
-)
+import pe.edu.upc.jameofit.mealplan.presentation.di.PresentationModule
+import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 
 data class DayMenu(
-    val day: String,
-    val breakfast: String,
-    val lunch: String,
-    val dinner: String
+    val day: String, val breakfast: String, val lunch: String, val dinner: String
 )
 
-@Composable
-fun MealPlanScreen(navController: NavHostController, modifier: Modifier = Modifier) {
-    val categories = listOf(
-        RecipeCategory("Desayunos", R.drawable.desayuno, RecipeRoute.BREAKFAST),
-        RecipeCategory("Almuerzos", R.drawable.almuerzo, RecipeRoute.LUNCH),
-        RecipeCategory("Cenas", R.drawable.cena, RecipeRoute.DINNER)
-    )
 
-    val weekMenus = listOf(
-        DayMenu("Lunes", "Receta 1/Desayuno", "Receta 3/Almuerzo", "Receta 2/Cena"),
-        DayMenu("Martes", "Receta 2/Desayuno", "Receta 1/Almuerzo", "Receta 3/Cena"),
-        DayMenu("Miércoles", "Receta 10/Desayuno", "Receta 5/Almuerzo", "Receta 7/Cena")
-    )
+@Composable
+fun MealPlanScreen(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    viewModel: MealPlanViewModel = remember { PresentationModule.getMealPlanViewModel() }
+) {
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) { viewModel.getAllCategories() }
+
+    val categories by viewModel.categories.collectAsState()
+
+    val uiCategories: List<RecipeCategory> =
+        if (categories.isNotEmpty()) categories.map { it.toRecipeCategory() }
+        else localDefaultCategories()
+
+    val weekMenus = remember {
+        listOf(
+            DayMenu("Lunes", "Receta 1/Desayuno", "Receta 3/Almuerzo", "Receta 2/Cena"),
+            DayMenu("Martes", "Receta 2/Desayuno", "Receta 1/Almuerzo", "Receta 3/Cena"),
+            DayMenu("Miércoles", "Receta 10/Desayuno", "Receta 5/Almuerzo", "Receta 7/Cena")
+        )
+    }
 
     LazyColumn(
         modifier = modifier
@@ -55,25 +59,25 @@ fun MealPlanScreen(navController: NavHostController, modifier: Modifier = Modifi
     ) {
         item {
             Text(
-                text = "Recetas",
+                "Recetas",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
             Text(
-                text = "Tap para ver detalle",
+                "Tap para ver detalle",
                 fontSize = 14.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(categories) { cat ->
+                items(uiCategories) { cat ->
                     Card(
                         modifier = Modifier
                             .width(160.dp)
                             .height(120.dp)
-                            .clickable { navController.navigate(cat.route) }, // <-- Navegación
+                            .clickable { navController.navigate(RecipeRoute.recipeList(categoryId = cat.id, title = cat.title)) },
                         elevation = CardDefaults.cardElevation(4.dp)
                     ) {
                         Column(
@@ -89,7 +93,7 @@ fun MealPlanScreen(navController: NavHostController, modifier: Modifier = Modifi
                                     .height(80.dp)
                             )
                             Text(
-                                text = cat.title,
+                                cat.title,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.padding(8.dp)
                             )
@@ -98,9 +102,16 @@ fun MealPlanScreen(navController: NavHostController, modifier: Modifier = Modifi
                 }
             }
 
+            if (categories.isEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = { scope.launch { viewModel.getAllCategories() } }) {
+                    Text("Intentar cargar categorías")
+                }
+            }
+
             Spacer(Modifier.height(20.dp))
             Text(
-                text = "Menú de la semana",
+                "Menú de la semana",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -126,11 +137,7 @@ fun MealPlanScreen(navController: NavHostController, modifier: Modifier = Modifi
                             .padding(end = 12.dp)
                     )
                     Column {
-                        Text(
-                            text = "${menu.day} Menu",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
+                        Text("${menu.day} Menu", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Spacer(Modifier.height(4.dp))
                         Text(menu.breakfast, fontSize = 14.sp, color = Color.DarkGray)
                         Text(menu.lunch, fontSize = 14.sp, color = Color.DarkGray)
@@ -148,9 +155,7 @@ fun MealPlanScreen(navController: NavHostController, modifier: Modifier = Modifi
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = MaterialTheme.shapes.medium
-            ) {
-                Text("Reiniciar Plan", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
+            ) { Text("Reiniciar Plan", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
             Spacer(Modifier.height(80.dp))
         }
     }
