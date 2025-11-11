@@ -48,6 +48,13 @@ object RecipeRoute {
     const val BREAKFAST_DETAIL = "recipe/breakfast_detail"
     const val LUNCH_DETAIL = "recipe/lunch_detail"
     const val DINNER_DETAIL = "recipe/dinner_detail"
+
+    const val RECIPE_LIST = "recipe/list/{categoryId}/{title}"
+
+    fun recipeList(categoryId: Long, title: String): String {
+        val safe = java.net.URLEncoder.encode(title, Charsets.UTF_8.name())
+        return "recipe/list/$categoryId/$safe"
+    }
 }
 
 

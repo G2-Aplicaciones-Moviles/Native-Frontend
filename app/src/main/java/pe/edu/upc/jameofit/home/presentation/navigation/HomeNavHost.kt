@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import pe.edu.upc.jameofit.faq.presentation.view.FaqScreen
 import pe.edu.upc.jameofit.goals.presentation.view.GoalsManagementRoute
@@ -31,6 +33,7 @@ import pe.edu.upc.jameofit.recipe.presentation.view.DinnerScreen
 import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.BreakfastRecipeDetailScreen
 import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.DinnerRecipeDetailScreen
 import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.LunchRecipeDetailScreen
+import pe.edu.upc.jameofit.recipe.presentation.view.RecipeListScreen
 
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
@@ -67,7 +70,13 @@ fun HomeNavHost(
     val backStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = backStackEntry?.destination?.route ?: HomeRoute.TRACKING
     val currentTab = toTabOf(currentRoute)
-    val topTitle = titleForRoute(currentRoute)
+    val argTitle = backStackEntry?.arguments?.getString("title")?.let {
+        try { java.net.URLDecoder.decode(it, Charsets.UTF_8.name()) } catch (_: Exception) { it }
+    }
+    val topTitle = when (currentRoute) {
+        RecipeRoute.RECIPE_LIST -> argTitle ?: "Recetas"
+        else -> titleForRoute(currentRoute)
+    }
 
     val currentDestinationKey = currentTab ?: when (currentRoute) {
         DrawerRoute.PROFILE,
@@ -80,7 +89,8 @@ fun HomeNavHost(
         DrawerRoute.RECOMMENDATIONS,
         RecipeRoute.BREAKFAST,
         RecipeRoute.LUNCH,
-        RecipeRoute.DINNER -> currentRoute
+        RecipeRoute.DINNER,
+        RecipeRoute.RECIPE_LIST -> currentRoute
         else -> TabGraph.TRACKING
     }
 
@@ -105,7 +115,8 @@ fun HomeNavHost(
                 DrawerRoute.SETTINGS,
                 RecipeRoute.BREAKFAST,
                 RecipeRoute.LUNCH,
-                RecipeRoute.DINNER -> true
+                RecipeRoute.DINNER,
+                RecipeRoute.RECIPE_LIST -> true
                 else -> false
             }
             if (isDrawer) {
@@ -240,6 +251,21 @@ fun HomeNavHost(
             }
             composable(RecipeRoute.DINNER_DETAIL) {
                 DinnerRecipeDetailScreen()
+            }
+            composable(
+                route = RecipeRoute.RECIPE_LIST,
+                arguments = listOf(
+                    navArgument("categoryId") { type = NavType.LongType },
+                    navArgument("title") { type = NavType.StringType }
+                )
+            ) { entry ->
+                val id = entry.arguments!!.getLong("categoryId")
+                val title = entry.arguments!!.getString("title") ?: "Recetas"
+                RecipeListScreen(
+                    navController = navController,
+                    categoryId = id,
+                    categoryTitle = try { java.net.URLDecoder.decode(title, Charsets.UTF_8.name()) } catch (_: Exception) { title }
+                )
             }
         }
     }
