@@ -9,9 +9,11 @@ import pe.edu.upc.jameofit.mealplan.data.model.CreateMealPlanRequest
 import pe.edu.upc.jameofit.mealplan.data.model.MealPlanEntryResponse
 import pe.edu.upc.jameofit.mealplan.data.model.MealPlanResponse
 import pe.edu.upc.jameofit.mealplan.data.repository.MealPlanRepository
+import pe.edu.upc.jameofit.tracking.data.repository.TrackingRepository
 
 class MealPlanViewModel(
-    private val repository: MealPlanRepository
+    private val repository: MealPlanRepository,
+    private val trackingRepository: TrackingRepository  // ✅ NUEVO
 ) : ViewModel() {
 
     private val _mealPlans = MutableStateFlow<List<MealPlanResponse>>(emptyList())
@@ -29,9 +31,26 @@ class MealPlanViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    // ✅ NUEVO: Cache del trackingId del usuario actual
+    private var cachedTrackingId: Long? = null
+    private var cachedUserId: Long? = null
+
     /**
-     * Carga todos los MealPlans disponibles desde el backend
+     * Establece el userId para operaciones futuras
      */
+    fun setUserId(userId: Long) {
+        cachedUserId = userId
+        // Cargar trackingId en background
+        viewModelScope.launch {
+            try {
+                val tracking = trackingRepository.getTrackingByUserId(userId)
+                cachedTrackingId = tracking?.id
+            } catch (e: Exception) {
+                // Silencioso, no crítico
+            }
+        }
+    }
+
     fun loadMealPlans() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -45,9 +64,6 @@ class MealPlanViewModel(
         }
     }
 
-    /**
-     * Carga las entradas de un MealPlan específico
-     */
     fun loadEntries(mealPlanId: Long) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -61,9 +77,6 @@ class MealPlanViewModel(
         }
     }
 
-    /**
-     * Carga un MealPlan específico por su ID
-     */
     fun loadMealPlanById(mealPlanId: Long) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -78,9 +91,6 @@ class MealPlanViewModel(
         }
     }
 
-    /**
-     * Crea un nuevo MealPlan
-     */
     fun createMealPlan(
         name: String,
         description: String,
@@ -115,6 +125,8 @@ class MealPlanViewModel(
         }
     }
 
+    // ❌ OBSOLETO: Borrado simple (mantener por compatibilidad)
+    @Deprecated("Usar deleteMealPlanWithTracking en su lugar")
     fun deleteMealPlan(mealPlanId: Long) {
         viewModelScope.launch {
             try {
@@ -122,6 +134,43 @@ class MealPlanViewModel(
                 _mealPlans.value = _mealPlans.value.filterNot { it.id == mealPlanId.toInt() }
             } catch (e: Exception) {
                 _error.value = "Error eliminando MealPlan: ${e.message}"
+            }
+        }
+    }
+
+    // ✅ NUEVO: Borrar meal plan limpiando el tracking
+    fun deleteMealPlanWithTracking(
+        mealPlanId: Long,
+        userId: Long,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                // 1. Obtener trackingId si no lo tenemos
+                val trackingId = cachedTrackingId ?: run {
+                    val tracking = trackingRepository.getTrackingByUserId(userId)
+                    tracking?.id ?: throw IllegalStateException("No se encontró tracking para el usuario")
+                }
+
+                // 2. Borrar meal plan con limpieza de tracking
+                val success = repository.deleteMealPlanWithTracking(mealPlanId, trackingId)
+
+                if (success) {
+                    _mealPlans.value = _mealPlans.value.filterNot { it.id == mealPlanId.toInt() }
+                    onSuccess()
+                } else {
+                    val msg = "No se pudo eliminar el meal plan"
+                    _error.value = msg
+                    onError(msg)
+                }
+            } catch (e: Exception) {
+                val msg = "Error eliminando MealPlan: ${e.message}"
+                _error.value = msg
+                onError(msg)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -156,5 +205,7 @@ class MealPlanViewModel(
         }
     }
 
-
+    fun resetError() {
+        _error.value = null
+    }
 }

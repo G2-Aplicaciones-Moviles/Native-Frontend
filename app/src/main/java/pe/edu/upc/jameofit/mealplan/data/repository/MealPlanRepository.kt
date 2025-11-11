@@ -44,7 +44,6 @@ class MealPlanRepository(
         response.isSuccessful
     }
 
-    // ✅ NUEVO: Obtener entries detallados (con nombres de recetas)
     suspend fun getDetailedEntries(mealPlanId: Int): List<MealPlanEntryResponse> = withContext(Dispatchers.IO) {
         val response = api.getEntriesWithRecipeInfo(mealPlanId.toLong())
         if (response.isSuccessful) {
@@ -54,9 +53,36 @@ class MealPlanRepository(
         }
     }
 
-    // ✅ NUEVO: Obtener meal plan activo de un profile
     suspend fun getCurrentMealPlanByProfile(profileId: Long): MealPlanResponse? = withContext(Dispatchers.IO) {
         val allPlans = getAllMealPlans()
         allPlans?.find { it.profileId == profileId && it.isCurrent }
+    }
+
+    // ✅ NUEVO: Borrar entry individual del tracking
+    suspend fun removeEntryFromTracking(trackingId: Long, entryId: Long): Boolean = withContext(Dispatchers.IO) {
+        val response = api.removeEntryFromTracking(trackingId, entryId)
+        response.isSuccessful
+    }
+
+    // ✅ NUEVO: Borrar meal plan completo limpiando tracking
+    suspend fun deleteMealPlanWithTracking(mealPlanId: Long, trackingId: Long): Boolean = withContext(Dispatchers.IO) {
+        try {
+            // 1. Obtener todas las entries del meal plan
+            val entries = getDetailedEntries(mealPlanId.toInt())
+
+            // 2. Borrar cada entry del tracking (ignorar errores individuales)
+            entries.forEach { entry ->
+                try {
+                    removeEntryFromTracking(trackingId, entry.id.toLong())
+                } catch (e: Exception) {
+                    // Continuar aunque falle una entry individual
+                }
+            }
+
+            // 3. Borrar el meal plan
+            deleteMealPlan(mealPlanId)
+        } catch (e: Exception) {
+            false
+        }
     }
 }

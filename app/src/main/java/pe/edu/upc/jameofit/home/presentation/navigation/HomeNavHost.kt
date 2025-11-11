@@ -359,6 +359,7 @@ fun HomeNavHost(
                 MealPlanDetailScreen(
                     mealPlanId = mealPlanId,
                     viewModel = mealPlanVm,
+                    authViewModel = authViewModel,
                     navController = homeNavController
                 )
             }

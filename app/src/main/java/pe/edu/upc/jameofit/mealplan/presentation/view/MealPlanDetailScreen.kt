@@ -9,12 +9,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 
 @Composable
 fun MealPlanDetailScreen(
     mealPlanId: Long,
     viewModel: MealPlanViewModel,
+    authViewModel: AuthViewModel,  // ✅ NUEVO: Necesario para obtener userId
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
@@ -22,6 +24,14 @@ fun MealPlanDetailScreen(
     val entries by viewModel.entries.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val authUser by authViewModel.user.collectAsState()  // ✅ NUEVO
+
+    // ✅ NUEVO: Configurar userId en el ViewModel
+    LaunchedEffect(authUser.id) {
+        if (authUser.id > 0) {
+            viewModel.setUserId(authUser.id)
+        }
+    }
 
     LaunchedEffect(mealPlanId) {
         viewModel.loadMealPlanById(mealPlanId)
@@ -112,16 +122,26 @@ fun MealPlanDetailScreen(
                                 Text("Agregar Receta")
                             }
 
+                            // ✅ ACTUALIZADO: Borrar con limpieza de tracking
                             Button(
                                 onClick = {
-                                    viewModel.deleteMealPlan(mealPlanId)
-                                    navController.popBackStack()
+                                    viewModel.deleteMealPlanWithTracking(
+                                        mealPlanId = mealPlanId,
+                                        userId = authUser.id,
+                                        onSuccess = {
+                                            navController.popBackStack()
+                                        },
+                                        onError = { msg ->
+                                            // El error ya se muestra en el UI state
+                                        }
+                                    )
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.error
-                                )
+                                ),
+                                enabled = !isLoading
                             ) {
-                                Text("Eliminar")
+                                Text(if (isLoading) "Eliminando..." else "Eliminar")
                             }
                         }
                     }

@@ -37,4 +37,11 @@ interface MealPlanService {
     suspend fun deleteMealPlan(
         @Path("mealPlanId") mealPlanId: Long
     ): Response<Unit>
+
+    // ✅ NUEVO: Borrar entry del tracking
+    @DELETE("/api/v1/meal-plan-entries/tracking/{trackingId}/entry/{mealPlanEntryId}")
+    suspend fun removeEntryFromTracking(
+        @Path("trackingId") trackingId: Long,
+        @Path("mealPlanEntryId") mealPlanEntryId: Long
+    ): Response<Unit>
 }
