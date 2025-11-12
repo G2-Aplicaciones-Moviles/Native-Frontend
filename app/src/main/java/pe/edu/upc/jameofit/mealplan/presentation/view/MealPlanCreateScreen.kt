@@ -16,17 +16,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
+import pe.edu.upc.jameofit.profile.domain.model.UserProfileResponse
 
 @Composable
 fun MealPlanCreateScreen(
-    viewModel: MealPlanViewModel = viewModel(),
+    profile: UserProfileResponse,
+    viewModel: MealPlanViewModel,
     onMealPlanCreated: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-
 
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -99,7 +100,7 @@ fun MealPlanCreateScreen(
                                 carbs = 0.1,
                                 proteins = 0.1,
                                 fats = 0.1,
-                                profileId = 1,
+                                profileId = profile.id, // <-- AQUÍ el id del perfil
                                 category = category,
                                 isCurrent = isCurrent,
                                 tags = tagsText.split(",")
@@ -136,6 +137,7 @@ fun MealPlanCreateScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+        }
     }
-}
+
 

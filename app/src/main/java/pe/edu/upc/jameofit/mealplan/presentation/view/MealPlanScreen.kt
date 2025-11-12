@@ -17,10 +17,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.R
 import pe.edu.upc.jameofit.home.presentation.navigation.RecipeRoute
 import pe.edu.upc.jameofit.mealplan.data.model.MealPlanResponse
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
+import pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState
+import pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileViewModel
 
 data class RecipeCategory(
     val title: String,
@@ -32,14 +35,32 @@ data class RecipeCategory(
 fun MealPlanScreen(
     navController: NavHostController,
     viewModel: MealPlanViewModel,
+    profileViewModel: ProfileViewModel,
     modifier: Modifier = Modifier
 ) {
     val mealPlans by viewModel.mealPlans.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadMealPlans()
+    val profileUiState by profileViewModel.uiState.collectAsState() // ✅ cambio 2
+
+    LaunchedEffect(profileUiState) {
+        when (val state = profileUiState) {
+            is ProfileUiState.Success -> {
+                viewModel.loadMealPlansByProfile(state.profile.id)
+            }
+            else -> Unit
+        }
+    }
+
+    if (profileUiState is ProfileUiState.Idle || profileUiState is ProfileUiState.Loading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = "Esperando datos del perfil...", color = Color.Gray)
+        }
+        return // ✅ cambio 5: detener el resto de la UI hasta que haya perfil
     }
 
     val categories = listOf(
@@ -120,7 +141,7 @@ fun MealPlanScreen(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    "➕ Crear nuevo MealPlan",
+                    "Crear nuevo MealPlan",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -167,6 +188,7 @@ fun MealPlanScreen(
         item { Spacer(Modifier.height(80.dp)) }
     }
 }
+
 
 @Composable
 fun MealPlanCard(plan: MealPlanResponse, onClick: () -> Unit) {

@@ -58,13 +58,19 @@ class MealPlanRepository(
         allPlans?.find { it.profileId == profileId && it.isCurrent }
     }
 
-    // ✅ NUEVO: Borrar entry individual del tracking
+    // ✅ NUEVO: Obtener meal plans desde el endpoint por profileId
+    suspend fun getMealPlansByProfileId(profileId: Long): List<MealPlanResponse>? = withContext(Dispatchers.IO) {
+        val response = api.getMealPlansByProfileId(profileId)
+        if (response.isSuccessful) response.body() else null
+    }
+
+    // ✅ Borrar entry individual del tracking
     suspend fun removeEntryFromTracking(trackingId: Long, entryId: Long): Boolean = withContext(Dispatchers.IO) {
         val response = api.removeEntryFromTracking(trackingId, entryId)
         response.isSuccessful
     }
 
-    // ✅ NUEVO: Borrar meal plan completo limpiando tracking
+    // ✅ Borrar meal plan completo limpiando tracking
     suspend fun deleteMealPlanWithTracking(mealPlanId: Long, trackingId: Long): Boolean = withContext(Dispatchers.IO) {
         try {
             // 1. Obtener todas las entries del meal plan
@@ -74,14 +80,12 @@ class MealPlanRepository(
             entries.forEach { entry ->
                 try {
                     removeEntryFromTracking(trackingId, entry.id.toLong())
-                } catch (e: Exception) {
-                    // Continuar aunque falle una entry individual
-                }
+                } catch (_: Exception) { }
             }
 
             // 3. Borrar el meal plan
             deleteMealPlan(mealPlanId)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

@@ -21,15 +21,40 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Idle)
     val uiState: StateFlow<ProfileUiState> = _uiState
 
+    // 🟢 Crear nuevo perfil
     fun createProfile(request: UserProfileRequest, onProfileCreated: (UserProfileResponse) -> Unit) {
         _uiState.value = ProfileUiState.Loading
         viewModelScope.launch {
             try {
                 val response = repository.createProfile(request)
-                _uiState.value = ProfileUiState.Success(response!!)
-                onProfileCreated(response)
+                if (response != null) {
+                    _uiState.value = ProfileUiState.Success(response)
+                    onProfileCreated(response)
+                } else {
+                    _uiState.value = ProfileUiState.Error("Error al crear perfil (sin respuesta)")
+                }
             } catch (e: Exception) {
-                _uiState.value = ProfileUiState.Error(e.message ?: "Unknown error")
+                _uiState.value = ProfileUiState.Error(e.message ?: "Error desconocido")
+            }
+        }
+    }
+
+    // 🟡 Obtener perfil por ID
+    fun getProfileById(profileId: Long, onProfileLoaded: (UserProfileResponse?) -> Unit = {}) {
+        _uiState.value = ProfileUiState.Loading
+        viewModelScope.launch {
+            try {
+                val profile = repository.getUserProfile(profileId)
+                if (profile != null) {
+                    _uiState.value = ProfileUiState.Success(profile)
+                    onProfileLoaded(profile)
+                } else {
+                    _uiState.value = ProfileUiState.Error("Perfil no encontrado")
+                    onProfileLoaded(null)
+                }
+            } catch (e: Exception) {
+                _uiState.value = ProfileUiState.Error("Error cargando perfil: ${e.message}")
+                onProfileLoaded(null)
             }
         }
     }

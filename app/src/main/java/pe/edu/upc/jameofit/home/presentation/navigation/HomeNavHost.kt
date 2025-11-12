@@ -46,6 +46,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import pe.edu.upc.jameofit.mealplan.presentation.di.PresentationModule.getMealPlanViewModel
 import pe.edu.upc.jameofit.mealplan.presentation.view.AddRecipeToMealPlanScreen
@@ -319,11 +322,29 @@ fun HomeNavHost(
                     }
                 )
 
+                val profileVm: pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return ProfilePresentationModule.getProfileViewModel() as T
+                        }
+                    }
+                )
+
+                val authUser by authViewModel.user.collectAsState()
+
+                LaunchedEffect(authUser.id) {
+                    profileVm.getProfileById(authUser.id)
+                }
+
                 MealPlanScreen(
                     navController = homeNavController,
-                    viewModel = mealPlanVm
+                    viewModel  = mealPlanVm,
+                    profileViewModel = profileVm
                 )
             }
+
+
 
             composable(DrawerRoute.MEAL_PLAN_CREATE) {
                 val mealPlanVm: MealPlanViewModel = viewModel(
@@ -335,11 +356,61 @@ fun HomeNavHost(
                     }
                 )
 
-                MealPlanCreateScreen(
-                    viewModel = mealPlanVm,
-                    onMealPlanCreated = { homeNavController.popBackStack() }
+                val profileVm: pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return ProfilePresentationModule.getProfileViewModel() as T
+                        }
+                    }
                 )
 
+                val uiState by profileVm.uiState.collectAsState()
+                val authUser by authViewModel.user.collectAsState()
+
+                LaunchedEffect(Unit) {
+                    profileVm.getProfileById(authUser.id)
+                }
+
+                when (uiState) {
+                    is pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Success -> {
+                        val profile = (uiState as pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Success).profile
+
+                        MealPlanCreateScreen(
+                            profile = profile,
+                            viewModel = mealPlanVm,
+                            onMealPlanCreated = { homeNavController.popBackStack() }
+                        )
+                    }
+
+                    is pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .wrapContentSize(Alignment.Center)
+                        )
+                    }
+
+                    is pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Error -> {
+                        val message = (uiState as pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Error).message
+                        Text(
+                            text = "Error cargando perfil: $message",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .wrapContentSize(Alignment.Center)
+                        )
+                    }
+
+                    else -> {
+                        Text(
+                            text = "Cargando perfil...",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .wrapContentSize(Alignment.Center)
+                        )
+                    }
+                }
             }
 
             composable(

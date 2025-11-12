@@ -208,4 +208,19 @@ class MealPlanViewModel(
     fun resetError() {
         _error.value = null
     }
+
+    fun loadMealPlansByProfile(profileId: Long) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val result = repository.getMealPlansByProfileId(profileId)
+                _mealPlans.value = result ?: emptyList()
+            } catch (e: Exception) {
+                _error.value = "Error cargando MealPlans del perfil: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
 }

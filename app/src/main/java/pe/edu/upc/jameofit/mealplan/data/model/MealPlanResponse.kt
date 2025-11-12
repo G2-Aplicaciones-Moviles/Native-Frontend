@@ -11,11 +11,10 @@ data class MealPlanResponse(
     val profileId: Long,
     val category: String,
     val isCurrent: Boolean,
-    val entries: List<MealPlanEntrySimple> = emptyList(),  // ✅ AGREGADO
+    val entries: List<MealPlanEntrySimple> = emptyList(),
     val tags: List<String>
 )
 
-// ✅ NUEVO: Modelo simplificado para entries dentro de MealPlanResponse
 data class MealPlanEntrySimple(
     val id: Int,
     val recipeId: Int,

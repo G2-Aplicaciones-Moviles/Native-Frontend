@@ -9,9 +9,11 @@ import retrofit2.http.*
 
 interface MealPlanService {
 
+    // ✅ Obtener todos los meal plans
     @GET("/api/v1/meal-plan")
     suspend fun getAllMealPlans(): Response<List<MealPlanResponse>>
 
+    // ✅ Obtener un meal plan por su ID
     @GET("/api/v1/meal-plan/{mealPlanId}")
     suspend fun getMealPlanById(
         @Path("mealPlanId") mealPlanId: Long
@@ -22,6 +24,7 @@ interface MealPlanService {
         @Path("mealPlanId") mealPlanId: Long
     ): Response<List<MealPlanEntryResponse>>
 
+    // ✅ Crear un nuevo meal plan
     @POST("/api/v1/meal-plan")
     suspend fun createMealPlan(
         @Body request: CreateMealPlanRequest
@@ -31,14 +34,19 @@ interface MealPlanService {
     suspend fun addEntryToMealPlan(
         @Path("mealPlanId") mealPlanId: Long,
         @Body request: AddRecipeRequest
-    ): Response<Unit>
+    ): Response<Map<String, Any>>
 
+    // ✅ Eliminar un meal plan
     @DELETE("/api/v1/meal-plan/{mealPlanId}")
     suspend fun deleteMealPlan(
         @Path("mealPlanId") mealPlanId: Long
     ): Response<Unit>
 
-    // ✅ NUEVO: Borrar entry del tracking
+    @GET("/api/v1/meal-plan/profile/{profileId}")
+    suspend fun getMealPlansByProfileId(
+        @Path("profileId") profileId: Long
+    ): Response<List<MealPlanResponse>>
+
     @DELETE("/api/v1/meal-plan-entries/tracking/{trackingId}/entry/{mealPlanEntryId}")
     suspend fun removeEntryFromTracking(
         @Path("trackingId") trackingId: Long,
