@@ -1,98 +1,80 @@
 package pe.edu.upc.jameofit.iam.presentation.view
 
-import android.content.Context
-import android.content.SharedPreferences
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import pe.edu.upc.jameofit.MainActivity
+import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.R
+import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
+import pe.edu.upc.jameofit.shared.presentation.components.ErrorSnackbarHost
+import pe.edu.upc.jameofit.shared.presentation.components.showErrorOnce
 import pe.edu.upc.jameofit.ui.theme.JameoBlue
 import pe.edu.upc.jameofit.ui.theme.JameoGreen
 
-
 @Composable
-fun Login(recordarPantalla: NavHostController, mainActivity: MainActivity){
+fun Login(
+    viewModel: AuthViewModel,
+    goToRegister: () -> Unit,
+    onLoginSuccess: () -> Unit,
+    goToForgotPassword: () -> Unit
+) {
+    val user by viewModel.user.collectAsState()
+    val loginSuccess by viewModel.loginSuccess.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-    val pref: SharedPreferences = mainActivity.getSharedPreferences("pref1", Context.MODE_PRIVATE)
-    val prefRegister: SharedPreferences = mainActivity.getSharedPreferences("pref_register", Context.MODE_PRIVATE)
+    var chk by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
 
-    val check: Boolean = pref.getBoolean("check", false)
-    val email: String = pref.getString("email", "")!!
-    val password: String = pref.getString("pas", "")!!
+    // Navegación de éxito
+    LaunchedEffect(loginSuccess) {
+        if (loginSuccess == true) {
+            onLoginSuccess()
+            viewModel.resetLoginSuccess()
+        }
+    }
 
-
-    val registeredEmail: String = prefRegister.getString("email", "")!!
-    val registeredPassword: String = prefRegister.getString("password", "")!!
-
-    var txtEmail by remember { mutableStateOf(email) }
-    var txtPass by remember { mutableStateOf(password) }
-    var chk by remember { mutableStateOf(check) }
+    // Mostrar errores una sola vez
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            scope.launch { snackbarHostState.showErrorOnce(errorMessage!!) }
+            viewModel.resetErrorMessage()
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
     ) {
-        IconButton(
-            onClick = { recordarPantalla.popBackStack() },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Regresar",
-                tint = Color.Black
-            )
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 30.dp)
                 .padding(top = 80.dp, bottom = 30.dp),
-            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ){
+        ) {
 
             Image(
                 painter = painterResource(id = R.drawable.logo),
@@ -111,23 +93,24 @@ fun Login(recordarPantalla: NavHostController, mainActivity: MainActivity){
             )
 
             OutlinedTextField(
-                value = txtEmail,
+                value = user.username,
                 modifier = Modifier.padding(vertical = 8.dp),
-                label = { Text(text = "Correo electrónico") },
-                placeholder = { Text(text = "ejemplo@correo.com") },
+                label = { Text(text = "Nombre de usuario") },
+                placeholder = { Text(text = "JameoFit") },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Email,
+                        imageVector = Icons.Default.Person,
                         tint = Color.Gray,
                         contentDescription = "Icono de usuario"
                     )
                 },
-                onValueChange = { txtEmail = it },
-                singleLine = true
+                onValueChange = { viewModel.updateUsername(it) },
+                singleLine = true,
+                isError = !errorMessage.isNullOrBlank() && user.username.isBlank()
             )
 
             OutlinedTextField(
-                value = txtPass,
+                value = user.password,
                 modifier = Modifier.padding(vertical = 8.dp),
                 label = { Text(text = "Contraseña") },
                 placeholder = { Text(text = "Ingresa tu contraseña") },
@@ -138,39 +121,31 @@ fun Login(recordarPantalla: NavHostController, mainActivity: MainActivity){
                         contentDescription = "Icono de contraseña"
                     )
                 },
-                onValueChange = { txtPass = it },
-                singleLine = true
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            painter = painterResource(id = if (passwordVisible) R.drawable.visibility_24px else R.drawable.visibility_off_24px),
+                            contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                            tint = Color.Unspecified
+                        )
+                    }
+                },
+                onValueChange = { viewModel.updatePassword(it) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                isError = !errorMessage.isNullOrBlank() && user.password.isBlank()
             )
 
             ElevatedButton(
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF099FE1)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = JameoBlue),
                 modifier = Modifier
                     .padding(vertical = 16.dp)
                     .height(48.dp),
-                onClick = {
-                    val editor: SharedPreferences.Editor = pref.edit()
-
-
-                    val isValidLogin = (txtEmail == registeredEmail && txtPass == registeredPassword) // Credenciales de registro
-
-                    if (isValidLogin && txtEmail.isNotEmpty() && txtPass.isNotEmpty()) {
-                        if (chk) {
-                            editor.putString("usu", txtEmail)
-                            editor.putString("pas", txtPass)
-                            editor.putBoolean("check", true)
-                        } else {
-                            editor.putString("usu", "")
-                            editor.putString("pas", "")
-                            editor.putBoolean("check", false)
-                        }
-
-                        editor.apply()
-                        recordarPantalla.navigate("V7")
-                    }
-
-                }
+                onClick = { viewModel.login(user) }
             ) {
                 Text(
                     text = "Ingresar",
@@ -187,17 +162,13 @@ fun Login(recordarPantalla: NavHostController, mainActivity: MainActivity){
                 Switch(
                     checked = chk,
                     colors = SwitchDefaults.colors(
-
                         checkedTrackColor = JameoBlue,
                         checkedThumbColor = Color.White,
-                        checkedBorderColor = Color.Transparent,
-                        checkedIconColor  = JameoGreen,
-
-
+                        checkedIconColor = JameoGreen,
                         uncheckedTrackColor = MaterialTheme.colorScheme.outlineVariant,
                         uncheckedThumbColor = Color.White,
-                        uncheckedBorderColor = Color.Transparent,
-                        uncheckedIconColor  = MaterialTheme.colorScheme.onSurfaceVariant),
+                        uncheckedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
                     onCheckedChange = { chk = it },
                     thumbContent = if (chk) {
                         {
@@ -225,18 +196,34 @@ fun Login(recordarPantalla: NavHostController, mainActivity: MainActivity){
                     modifier = Modifier.padding(start = 12.dp)
                 )
             }
+
             Spacer(Modifier.height(8.dp))
 
             Text(
                 text = "Olvidé mi contraseña",
-                color = MaterialTheme.colorScheme.error,     // rojo del tema; o usa Color(0xFFD32F2F)
+                color = MaterialTheme.colorScheme.error,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                textDecoration = TextDecoration.Underline,   // opcional para que parezca link
+                textDecoration = TextDecoration.Underline,
                 modifier = Modifier
                     .padding(top = 4.dp)
-                    .clickable { recordarPantalla.navigate("V8") }
+                    .clickable { goToForgotPassword() }
             )
+
+            Spacer(Modifier.height(24.dp))
+
+            Row {
+                Text("¿No tienes cuenta aún? ")
+                Text(
+                    text = "Regístrate",
+                    color = JameoBlue,
+                    fontWeight = FontWeight.SemiBold,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { goToRegister() }
+                )
+            }
         }
+
+        ErrorSnackbarHost(hostState = snackbarHostState)
     }
 }

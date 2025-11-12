@@ -20,24 +20,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
 import pe.edu.upc.jameofit.R
 
-
 @Composable
-fun Welcome(recordarPantalla: NavHostController){
+fun Welcome(
+    goToLogin: () -> Unit,
+    goToRegister: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
-    ){
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 30.dp)
                 .padding(top = 80.dp, bottom = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
-        ){
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.logo3),
                 contentDescription = "Icono de la aplicación",
@@ -46,68 +47,52 @@ fun Welcome(recordarPantalla: NavHostController){
                     .padding(bottom = 15.dp)
             )
 
-            Text(text = "Bienvenido",
+            Text(
+                "Bienvenido",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 26.sp,
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 5.dp)
+                color = Color.Black
             )
-
             Text(
-                text = "Tu compañero inteligente para alcanzar tus metas de salud y bienestar.",
-                fontWeight = FontWeight.Normal,
+                "Tu compañero inteligente para alcanzar tus metas de salud y bienestar.",
                 fontSize = 20.sp,
                 color = Color.Black,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(5.dp)
             )
-
-            Text(text = "¡Empieza hoy tu transformación!",
-                fontWeight = FontWeight.Normal,
+            Text(
+                "¡Empieza hoy tu transformación!",
                 fontSize = 20.sp,
                 color = Color.Black,
                 modifier = Modifier.padding(5.dp)
             )
 
             ElevatedButton(
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF099FE1)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF099FE1)),
                 modifier = Modifier
                     .padding(vertical = 14.dp)
                     .height(48.dp),
-                onClick = {
-                        recordarPantalla.navigate("V3")
-                }
+                onClick = goToRegister
             ) {
                 Text(
-                    text = "Registrarse",
+                    "Registrarse",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.White
                 )
             }
 
-            Text(
-                text = "O",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-                color = Color.Gray
-            )
+            Text("O", fontSize = 16.sp, color = Color.Gray)
 
             ElevatedButton(
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF099FE1)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF099FE1)),
                 modifier = Modifier
                     .padding(vertical = 14.dp)
                     .height(48.dp),
-                onClick = {
-                    recordarPantalla.navigate("V2")
-                }
+                onClick = goToLogin
             ) {
                 Text(
-                    text = "Iniciar Sesión",
+                    "Iniciar Sesión",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.White
@@ -115,5 +100,4 @@ fun Welcome(recordarPantalla: NavHostController){
             }
         }
     }
-
 }

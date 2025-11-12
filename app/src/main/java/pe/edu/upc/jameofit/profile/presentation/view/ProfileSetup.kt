@@ -1,177 +1,177 @@
 package pe.edu.upc.jameofit.profile.presentation.view
 
 import android.content.Context
-import android.content.SharedPreferences
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import android.os.Build
+import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import pe.edu.upc.jameofit.MainActivity
+import androidx.core.content.edit
+import java.time.LocalDate
 
-
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileSetup(recordarPantalla: NavHostController, mainActivity: MainActivity){
+fun ProfileSetup(
+    authUserId: Long,
+    onNext: () -> Unit,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val pref = remember { context.getSharedPreferences("pref_profile", Context.MODE_PRIVATE) }
 
-    val pref: SharedPreferences = mainActivity.getSharedPreferences("pref_profile", Context.MODE_PRIVATE)
+    var txtNombre by remember { mutableStateOf("") }
+    var txtPeso by remember { mutableStateOf("") }
+    var txtAltura by remember { mutableStateOf("") }
+    var txtEdad by remember { mutableStateOf("") } // podemos eliminar si usamos año
+    var txtGenero by remember { mutableStateOf("") }
 
-    var txtNom by remember { mutableStateOf("") }
-    var txtEda by remember { mutableStateOf("") }
-    var txtPes by remember { mutableStateOf("") }
+    // Dropdown Género
+    val generos = listOf("MALE", "FEMALE", "OTHER")
+    var expandedGenero by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ){
+    // Dropdown Año de nacimiento
+    val currentYear = java.time.LocalDate.now().year
+    val years = (currentYear downTo currentYear - 100).toList() // últimos 100 años
+    var selectedYear by remember { mutableStateOf<Int?>(null) }
+    var expandedYear by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
         IconButton(
-            onClick = { recordarPantalla.popBackStack() },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Regresar",
-                tint = Color.Black
-            )
-        }
+            onClick = onBack,
+            modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
+        ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar") }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 30.dp)
-                .padding(top = 20.dp, bottom = 20.dp),
-            verticalArrangement = Arrangement.Center,
+                .padding(top = 60.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Completa tu información para recibir sugerencias personalizadas",
-                fontWeight = FontWeight.Normal,
-                fontSize = 20.sp,
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(5.dp)
+                text = "Completa tu perfil",
+                fontSize = 24.sp,
+                modifier = Modifier.padding(bottom = 24.dp)
             )
 
+            // Nombre
             OutlinedTextField(
-                value = txtNom,
-                modifier = Modifier.padding(vertical = 8.dp),
-                label = { Text(text = "Nombre") },
-                placeholder = { Text(text = "Ingresa tu nombre") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Face,
-                        tint = Color.Gray,
-                        contentDescription = "Icono de usuario"
-                    )
-                },
-                onValueChange = { txtNom = it },
-                singleLine = true
+                value = txtNombre,
+                onValueChange = { txtNombre = it },
+                label = { Text("Nombre") },
+                modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(16.dp))
 
+            // Peso
             OutlinedTextField(
-                value = txtEda,
-                modifier = Modifier.padding(vertical = 8.dp),
-                label = { Text(text = "Edad") },
-                placeholder = { Text(text = "Ingresa tu edad") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.DateRange,
-                        tint = Color.Gray,
-                        contentDescription = "Icono de edad"
-                    )
-                },
-                onValueChange = { txtEda = it },
-                singleLine = true
+                value = txtPeso,
+                onValueChange = { txtPeso = it.filter { c -> c.isDigit() || c == '.' } },
+                label = { Text("Peso (kg)") },
+                modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(16.dp))
 
+            // Altura
             OutlinedTextField(
-                value = txtPes,
-                modifier = Modifier.padding(vertical = 8.dp),
-                label = { Text(text = "Peso (kg)") },
-                placeholder = { Text(text = "Ingresa tu peso") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        tint = Color.Gray,
-                        contentDescription = "Icono de peso"
-                    )
-                },
-                onValueChange = { txtPes = it },
-                singleLine = true
+                value = txtAltura,
+                onValueChange = { txtAltura = it.filter { c -> c.isDigit() || c == '.' } },
+                label = { Text("Altura (m)") },
+                modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Recuerda que puedes editar tu perfil más adelante",
-                fontWeight = FontWeight.Normal,
-                fontSize = 16.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
+            // Dropdown Género
+            ExposedDropdownMenuBox(
+                expanded = expandedGenero,
+                onExpandedChange = { expandedGenero = !expandedGenero }
+            ) {
+                OutlinedTextField(
+                    value = txtGenero,
+                    onValueChange = {},
+                    label = { Text("Género") },
+                    readOnly = true,
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedGenero,
+                    onDismissRequest = { expandedGenero = false }
+                ) {
+                    generos.forEach { genero ->
+                        DropdownMenuItem(
+                            text = { Text(genero) },
+                            onClick = {
+                                txtGenero = genero
+                                expandedGenero = false
+                            }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Dropdown Año de nacimiento
+            ExposedDropdownMenuBox(
+                expanded = expandedYear,
+                onExpandedChange = { expandedYear = !expandedYear }
+            ) {
+                OutlinedTextField(
+                    value = selectedYear?.toString() ?: "",
+                    onValueChange = {},
+                    label = { Text("Año de nacimiento") },
+                    placeholder = { Text("Selecciona año") },
+                    readOnly = true,
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedYear,
+                    onDismissRequest = { expandedYear = false }
+                ) {
+                    years.forEach { year ->
+                        DropdownMenuItem(
+                            text = { Text(year.toString()) },
+                            onClick = {
+                                selectedYear = year
+                                expandedYear = false
+                            }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
 
             ElevatedButton(
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF099FE1)
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-                    .height(48.dp),
                 onClick = {
-
-                    if (txtNom.trim().isNotEmpty()) {
-
-                        val editor: SharedPreferences.Editor = pref.edit()
-
-                        editor.putString("nombre", txtNom.trim())
-                        editor.putString("edad", txtEda.trim())
-                        editor.putString("peso", txtPes.trim())
-                        editor.putLong("profile_updated", System.currentTimeMillis())
-                        editor.putBoolean("profile_completed", true)
-
-                        editor.apply()
-
-
-                        recordarPantalla.navigate("V5")
+                    if (txtNombre.isBlank() || txtPeso.isBlank() || txtAltura.isBlank() || txtGenero.isBlank() || selectedYear == null) {
+                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                        return@ElevatedButton
                     }
 
-                }
+                    // Guardar en SharedPreferences
+                    pref.edit {
+                        putString("nombre", txtNombre)
+                        putString("peso", txtPeso)
+                        putString("height", txtAltura)
+                        putString("gender", txtGenero)
+                        putString("birthDate", "${selectedYear}-01-01")
+                    }
+
+                    onNext()
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp)
             ) {
-                Text(
-                    text = "Continuar",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White
-                )
+                Text("Continuar")
             }
         }
     }
