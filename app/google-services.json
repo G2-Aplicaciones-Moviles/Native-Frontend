@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "841279913020",
+    "project_id": "jameo-fit",
+    "storage_bucket": "jameo-fit.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841279913020:android:0acaf32b46bddece225739",
+        "android_client_info": {
+          "package_name": "pe.edu.upc.jameofit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJf5yC3KWadsjtIoFaBcE5bPdJL_25HWI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

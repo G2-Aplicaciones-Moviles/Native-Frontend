@@ -6,4 +6,6 @@ plugins {
 
     //ksp
     alias(libs.plugins.ksp) apply false
+    //google-services
+    alias(libs.plugins.google.services) apply false
 }
