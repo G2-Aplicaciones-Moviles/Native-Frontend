@@ -17,7 +17,8 @@ object PresentationModule {
 
         // Tracking repository: build using SharedDataModule's Retrofit instance
         val trackingService = SharedDataModule.getRetrofit().create(TrackingService::class.java)
-        val trackingRepo = TrackingRepository(trackingService)
+        val trackingGoalService = SharedDataModule.getRetrofit().create(pe.edu.upc.jameofit.tracking.data.remote.TrackingGoalService::class.java)
+        val trackingRepo = TrackingRepository(trackingService, trackingGoalService)
 
         // Construct GoalsViewModel with the three dependencies
         return GoalsViewModel(

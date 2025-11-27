@@ -28,7 +28,6 @@ import pe.edu.upc.jameofit.goals.presentation.viewmodel.GoalsViewModel
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.goals.presentation.di.PresentationModule as GoalsPresentationModule
 import pe.edu.upc.jameofit.profile.presentation.di.PresentationModule as ProfilePresentationModule
-import pe.edu.upc.jameofit.profile.presentation.view.HealthSetupRoute
 import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanScreen
 import pe.edu.upc.jameofit.recipe.presentation.view.BreakfastScreen
@@ -37,15 +36,8 @@ import pe.edu.upc.jameofit.recipe.presentation.view.DinnerScreen
 import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.BreakfastRecipeDetailScreen
 import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.DinnerRecipeDetailScreen
 import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.LunchRecipeDetailScreen
-import pe.edu.upc.jameofit.tracking.data.remote.TrackingService
-import pe.edu.upc.jameofit.tracking.data.repository.TrackingRepository
 import pe.edu.upc.jameofit.tracking.presentation.viewmodel.TrackingViewModel
-import pe.edu.upc.jameofit.shared.data.di.SharedDataModule
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.LaunchedEffect
@@ -56,6 +48,8 @@ import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanCreateScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanDetailScreen
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 import pe.edu.upc.jameofit.tracking.presentation.view.MealActivityScreen
+import pe.edu.upc.jameofit.profile.presentation.view.ProfileScreen
+import pe.edu.upc.jameofit.profile.presentation.view.EditProfileScreen
 
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
@@ -63,6 +57,7 @@ private fun titleForRoute(route: String) = when {
     route.startsWith("messages") -> "Mensajes"
     route.startsWith("nutritionists") -> "Nutricionistas"
     route == DrawerRoute.PROFILE -> "Perfil"
+    route == DrawerRoute.EDIT_PREFERENCES -> "Editar Preferencias"
     route == DrawerRoute.GOALS -> "Gestionar objetivos"
     route == DrawerRoute.PROGRESS -> "Analíticas y estadísticas"
     route == DrawerRoute.MEAL_PLANS -> "Planes de alimentación"
@@ -91,7 +86,6 @@ fun HomeNavHost(
     authViewModel: AuthViewModel,
     onRequestLogout: () -> Unit = {}
 ) {
-    // ✅ Crear un NavController independiente para HomeNavHost
     val homeNavController = rememberNavController()
 
     val backStackEntry = homeNavController.currentBackStackEntryAsState().value
@@ -101,6 +95,7 @@ fun HomeNavHost(
 
     val currentDestinationKey = currentTab ?: when (currentRoute) {
         DrawerRoute.PROFILE,
+        DrawerRoute.EDIT_PREFERENCES,
         DrawerRoute.GOALS,
         DrawerRoute.PROGRESS,
         DrawerRoute.MEAL_PLANS,
@@ -127,6 +122,7 @@ fun HomeNavHost(
 
             val isDrawer = when (currentRoute) {
                 DrawerRoute.PROFILE,
+                DrawerRoute.EDIT_PREFERENCES,
                 DrawerRoute.GOALS,
                 DrawerRoute.PROGRESS,
                 DrawerRoute.MEAL_PLANS,
@@ -244,43 +240,59 @@ fun HomeNavHost(
                 composable(HomeRoute.NUTRITIONISTS) { NutritionistsScreen() }
             }
 
+            // ✅ Pantalla de Perfil
             composable(DrawerRoute.PROFILE) {
-                // Pantalla temporal de perfil
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    val authUser by authViewModel.user.collectAsState()
+                val profileVm: pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return ProfilePresentationModule.getProfileViewModel() as T
+                        }
+                    }
+                )
 
-                    Text(
-                        text = "Mi Perfil",
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
+                ProfileScreen(
+                    profileViewModel = profileVm,
+                    authViewModel = authViewModel,
+                    onEditPreferences = {
+                        homeNavController.navigate(DrawerRoute.EDIT_PREFERENCES)
+                    },
+                    onViewMealPlans = {
+                        homeNavController.navigate(DrawerRoute.MEAL_PLANS)
+                    },
+                    onViewTips = {
+                        homeNavController.navigate(TabGraph.TIPS)
+                    },
+                    onViewDailySummary = {
+                        homeNavController.navigate(HomeRoute.TRACKING)
+                    },
+                    onLogout = onRequestLogout
+                )
+            }
 
-                    Text(
-                        text = "Usuario: ${authUser.username}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+            // ✅ Pantalla de Editar Preferencias
+            composable(DrawerRoute.EDIT_PREFERENCES) {
+                val profileVm: pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return ProfilePresentationModule.getProfileViewModel() as T
+                        }
+                    }
+                )
 
-                    Text(
-                        text = "ID: ${authUser.id}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                val authUser by authViewModel.user.collectAsState()
 
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = "Pantalla de perfil en desarrollo",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                EditProfileScreen(
+                    profileId = authUser.id,
+                    viewModel = profileVm,
+                    onSaved = {
+                        homeNavController.popBackStack()
+                    },
+                    onBack = {
+                        homeNavController.popBackStack()
+                    }
+                )
             }
 
             composable(DrawerRoute.GOALS) {
@@ -312,6 +324,7 @@ fun HomeNavHost(
             }
 
             composable(DrawerRoute.PROGRESS) { PlaceholderScreen("Analíticas y estadísticas") }
+
             composable(DrawerRoute.MEAL_PLANS) {
                 val mealPlanVm: MealPlanViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
@@ -339,12 +352,10 @@ fun HomeNavHost(
 
                 MealPlanScreen(
                     navController = homeNavController,
-                    viewModel  = mealPlanVm,
+                    viewModel = mealPlanVm,
                     profileViewModel = profileVm
                 )
             }
-
-
 
             composable(DrawerRoute.MEAL_PLAN_CREATE) {
                 val mealPlanVm: MealPlanViewModel = viewModel(

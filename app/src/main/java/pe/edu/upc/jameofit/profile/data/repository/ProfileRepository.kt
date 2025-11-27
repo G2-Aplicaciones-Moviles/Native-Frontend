@@ -17,4 +17,10 @@ class ProfileRepository(private val service: ProfileService) {
         if (resp.code() == 404) return null
         throw IllegalStateException("Failed get profile: ${resp.code()}")
     }
+
+    suspend fun updateProfile(profileId: Long, request: UserProfileRequest): Boolean {
+        val resp = service.updateUserProfile(profileId, request)
+        if (resp.isSuccessful) return true
+        throw IllegalStateException("Failed updating profile: ${resp.code()} ${resp.errorBody()?.string()}")
+    }
 }

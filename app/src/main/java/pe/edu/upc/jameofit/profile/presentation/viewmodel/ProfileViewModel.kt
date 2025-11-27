@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.profile.data.repository.ProfileRepository
 import pe.edu.upc.jameofit.profile.domain.model.UserProfileRequest
 import pe.edu.upc.jameofit.profile.domain.model.UserProfileResponse
+import pe.edu.upc.jameofit.tracking.data.repository.TrackingRepository
 
 sealed interface ProfileUiState {
     object Idle : ProfileUiState
@@ -16,12 +17,14 @@ sealed interface ProfileUiState {
     data class Error(val message: String) : ProfileUiState
 }
 
-class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() {
+class ProfileViewModel(
+    private val repository: ProfileRepository,
+    private val trackingRepository: TrackingRepository  // ✅ NUEVO
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Idle)
     val uiState: StateFlow<ProfileUiState> = _uiState
 
-    // 🟢 Crear nuevo perfil
     fun createProfile(request: UserProfileRequest, onProfileCreated: (UserProfileResponse) -> Unit) {
         _uiState.value = ProfileUiState.Loading
         viewModelScope.launch {
@@ -39,7 +42,6 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
         }
     }
 
-    // 🟡 Obtener perfil por ID
     fun getProfileById(profileId: Long, onProfileLoaded: (UserProfileResponse?) -> Unit = {}) {
         _uiState.value = ProfileUiState.Loading
         viewModelScope.launch {
@@ -57,5 +59,46 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
                 onProfileLoaded(null)
             }
         }
+    }
+
+    // ✅ NUEVO: Actualizar perfil + recalcular tracking
+    fun updateProfileAndRecalculate(
+        profileId: Long,
+        request: UserProfileRequest,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        _uiState.value = ProfileUiState.Loading
+        viewModelScope.launch {
+            try {
+                // 1. Actualizar perfil
+                val updated = repository.updateProfile(profileId, request)
+
+                if (updated) {
+                    // 2. Recalcular tracking goal
+                    trackingRepository.updateTrackingGoalFromProfile(profileId)
+
+                    // 3. Recargar perfil actualizado
+                    val updatedProfile = repository.getUserProfile(profileId)
+                    if (updatedProfile != null) {
+                        _uiState.value = ProfileUiState.Success(updatedProfile)
+                        onSuccess()
+                    } else {
+                        _uiState.value = ProfileUiState.Error("Perfil actualizado pero no se pudo recargar")
+                    }
+                } else {
+                    _uiState.value = ProfileUiState.Error("No se pudo actualizar el perfil")
+                    onError("No se pudo actualizar el perfil")
+                }
+            } catch (e: Exception) {
+                val msg = "Error actualizando perfil: ${e.message}"
+                _uiState.value = ProfileUiState.Error(msg)
+                onError(msg)
+            }
+        }
+    }
+
+    fun resetState() {
+        _uiState.value = ProfileUiState.Idle
     }
 }

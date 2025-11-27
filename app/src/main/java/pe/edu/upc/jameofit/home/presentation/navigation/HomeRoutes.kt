@@ -56,6 +56,7 @@ object RecipeRoute {
  */
 object DrawerRoute {
     const val PROFILE = "drawer/profile"
+    const val EDIT_PREFERENCES = "drawer/edit_preferences"  // ✅ AGREGAR
     const val GOALS = "drawer/goals"
     const val PROGRESS = "drawer/progress"
     const val MEAL_PLANS = "drawer/meal_plans"
@@ -65,7 +66,5 @@ object DrawerRoute {
     const val SUBSCRIPTIONS = "drawer/subscriptions"
     const val FAQ = "drawer/faq"
     const val SETTINGS = "drawer/settings"
-
     const val RECOMMENDATIONS = "drawer/recommendations"
-
 }
