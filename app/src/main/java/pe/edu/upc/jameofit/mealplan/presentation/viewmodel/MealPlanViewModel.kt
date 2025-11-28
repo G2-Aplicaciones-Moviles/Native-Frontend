@@ -13,7 +13,7 @@ import pe.edu.upc.jameofit.tracking.data.repository.TrackingRepository
 
 class MealPlanViewModel(
     private val repository: MealPlanRepository,
-    private val trackingRepository: TrackingRepository  // ✅ NUEVO
+    private val trackingRepository: TrackingRepository
 ) : ViewModel() {
 
     private val _mealPlans = MutableStateFlow<List<MealPlanResponse>>(emptyList())
@@ -31,22 +31,17 @@ class MealPlanViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    // ✅ NUEVO: Cache del trackingId del usuario actual
     private var cachedTrackingId: Long? = null
     private var cachedUserId: Long? = null
 
-    /**
-     * Establece el userId para operaciones futuras
-     */
     fun setUserId(userId: Long) {
         cachedUserId = userId
-        // Cargar trackingId en background
         viewModelScope.launch {
             try {
                 val tracking = trackingRepository.getTrackingByUserId(userId)
                 cachedTrackingId = tracking?.id
             } catch (e: Exception) {
-                // Silencioso, no crítico
+                // Silencioso
             }
         }
     }
@@ -91,6 +86,7 @@ class MealPlanViewModel(
         }
     }
 
+    // ✅ ACTUALIZADO: Ahora pasa userId al repository
     fun createMealPlan(
         name: String,
         description: String,
@@ -98,12 +94,13 @@ class MealPlanViewModel(
         carbs: Double,
         proteins: Double,
         fats: Double,
-        profileId: Long,
+        profileId: Long,  // Este es el userId
         category: String,
         isCurrent: Boolean,
         tags: List<String>
     ) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val request = CreateMealPlanRequest(
                     name = name,
@@ -117,15 +114,17 @@ class MealPlanViewModel(
                     isCurrent = isCurrent,
                     tags = tags
                 )
-                repository.createMealPlan(request)
+                // ✅ CAMBIO: Ahora pasa profileId como userId
+                repository.createMealPlan(userId = profileId, request = request)
                 loadMealPlans()
             } catch (e: Exception) {
                 _error.value = "Error creando MealPlan: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
-    // ❌ OBSOLETO: Borrado simple (mantener por compatibilidad)
     @Deprecated("Usar deleteMealPlanWithTracking en su lugar")
     fun deleteMealPlan(mealPlanId: Long) {
         viewModelScope.launch {
@@ -138,7 +137,6 @@ class MealPlanViewModel(
         }
     }
 
-    // ✅ NUEVO: Borrar meal plan limpiando el tracking
     fun deleteMealPlanWithTracking(
         mealPlanId: Long,
         userId: Long,
@@ -148,13 +146,11 @@ class MealPlanViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // 1. Obtener trackingId si no lo tenemos
                 val trackingId = cachedTrackingId ?: run {
                     val tracking = trackingRepository.getTrackingByUserId(userId)
                     tracking?.id ?: throw IllegalStateException("No se encontró tracking para el usuario")
                 }
 
-                // 2. Borrar meal plan con limpieza de tracking
                 val success = repository.deleteMealPlanWithTracking(mealPlanId, trackingId)
 
                 if (success) {
@@ -223,4 +219,17 @@ class MealPlanViewModel(
         }
     }
 
+    // ✅ NUEVO: Cargar templates
+    fun loadTemplates() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                _mealPlans.value = repository.getTemplates() ?: emptyList()
+            } catch (e: Exception) {
+                _error.value = "Error cargando templates: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 }

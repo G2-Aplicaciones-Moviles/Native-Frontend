@@ -12,13 +12,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.R
+import pe.edu.upc.jameofit.home.presentation.navigation.DrawerRoute
 import pe.edu.upc.jameofit.home.presentation.navigation.RecipeRoute
 import pe.edu.upc.jameofit.mealplan.data.model.MealPlanResponse
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
@@ -42,7 +43,7 @@ fun MealPlanScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    val profileUiState by profileViewModel.uiState.collectAsState() // ✅ cambio 2
+    val profileUiState by profileViewModel.uiState.collectAsState()
 
     LaunchedEffect(profileUiState) {
         when (val state = profileUiState) {
@@ -60,7 +61,7 @@ fun MealPlanScreen(
         ) {
             Text(text = "Esperando datos del perfil...", color = Color.Gray)
         }
-        return // ✅ cambio 5: detener el resto de la UI hasta que haya perfil
+        return
     }
 
     val categories = listOf(
@@ -121,6 +122,52 @@ fun MealPlanScreen(
             }
 
             Spacer(Modifier.height(24.dp))
+
+            // ✅ NUEVO: Card destacada para Templates de Nutricionistas
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate(DrawerRoute.TEMPLATES) },
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF2196F3)
+                ),
+                elevation = CardDefaults.cardElevation(6.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "🥗 Planes de Expertos",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Descubre planes creados por nutricionistas profesionales",
+                            fontSize = 14.sp,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.menu),
+                        contentDescription = "Templates",
+                        modifier = Modifier.size(40.dp),
+                        colorFilter = ColorFilter.tint(Color.White)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             Text(
                 text = "Tus Meal Plans",
                 fontSize = 18.sp,
@@ -129,7 +176,7 @@ fun MealPlanScreen(
             )
 
             Button(
-                onClick = { navController.navigate(pe.edu.upc.jameofit.home.presentation.navigation.DrawerRoute.MEAL_PLAN_CREATE) },
+                onClick = { navController.navigate(DrawerRoute.MEAL_PLAN_CREATE) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp)
@@ -188,7 +235,6 @@ fun MealPlanScreen(
         item { Spacer(Modifier.height(80.dp)) }
     }
 }
-
 
 @Composable
 fun MealPlanCard(plan: MealPlanResponse, onClick: () -> Unit) {

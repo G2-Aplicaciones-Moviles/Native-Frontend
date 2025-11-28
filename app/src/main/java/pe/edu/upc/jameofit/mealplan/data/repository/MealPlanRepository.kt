@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import pe.edu.upc.jameofit.mealplan.data.remote.MealPlanService
 import pe.edu.upc.jameofit.mealplan.data.model.*
+import pe.edu.upc.jameofit.mealplan.data.remote.MealPlanTemplateResponse
 
 class MealPlanRepository(
     private val api: MealPlanService
@@ -24,8 +25,12 @@ class MealPlanRepository(
         if (response.isSuccessful) response.body() else null
     }
 
-    suspend fun createMealPlan(request: CreateMealPlanRequest): MealPlanResponse? = withContext(Dispatchers.IO) {
-        val response = api.createMealPlan(request)
+    // ✅ ACTUALIZADO: Ahora recibe userId como parámetro
+    suspend fun createMealPlan(
+        userId: Long,  // ← NUEVO parámetro
+        request: CreateMealPlanRequest
+    ): MealPlanResponse? = withContext(Dispatchers.IO) {
+        val response = api.createMealPlan(userId, request)
         if (response.isSuccessful) response.body() else null
     }
 
@@ -88,5 +93,16 @@ class MealPlanRepository(
         } catch (_: Exception) {
             false
         }
+    }
+    // ✅ NUEVO: Obtener templates
+    suspend fun getTemplates(): List<MealPlanResponse>? = withContext(Dispatchers.IO) {
+        val response = api.getTemplates()
+        if (response.isSuccessful) response.body() else null
+    }
+
+    // ✅ NUEVO: Obtener templates detallados
+    suspend fun getTemplatesDetailed(): List<MealPlanTemplateResponse>? = withContext(Dispatchers.IO) {
+        val response = api.getTemplatesDetailed()
+        if (response.isSuccessful) response.body() else null
     }
 }

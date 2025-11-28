@@ -25,10 +25,19 @@ interface MealPlanService {
     ): Response<List<MealPlanEntryResponse>>
 
     // ✅ Crear un nuevo meal plan
-    @POST("/api/v1/meal-plan")
+    @POST("/api/v1/meal-plan/users/{userId}")
     suspend fun createMealPlan(
+        @Path("userId") userId: Long,  // ← NUEVO: userId en path
         @Body request: CreateMealPlanRequest
     ): Response<MealPlanResponse>
+
+    // ✅ NUEVO: Obtener templates de nutricionistas
+    @GET("/api/v1/meal-plan/templates")
+    suspend fun getTemplates(): Response<List<MealPlanResponse>>
+
+    // ✅ NUEVO: Obtener templates con info detallada
+    @GET("/api/v1/meal-plan/templates/detailed")
+    suspend fun getTemplatesDetailed(): Response<List<MealPlanTemplateResponse>>
 
     @POST("/api/v1/meal-plan/{mealPlanId}/entries")
     suspend fun addEntryToMealPlan(
@@ -53,3 +62,16 @@ interface MealPlanService {
         @Path("mealPlanEntryId") mealPlanEntryId: Long
     ): Response<Unit>
 }
+
+data class MealPlanTemplateResponse(
+    val id: Int,
+    val name: String,
+    val description: String,
+    val category: String,
+    val nutritionistId: Int,
+    val nutritionistName: String,
+    val calories: Double,
+    val carbs: Double,
+    val proteins: Double,
+    val fats: Double
+)

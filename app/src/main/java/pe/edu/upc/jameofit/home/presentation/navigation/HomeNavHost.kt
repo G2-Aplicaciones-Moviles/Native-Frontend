@@ -46,6 +46,8 @@ import pe.edu.upc.jameofit.mealplan.presentation.di.PresentationModule.getMealPl
 import pe.edu.upc.jameofit.mealplan.presentation.view.AddRecipeToMealPlanScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanCreateScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanDetailScreen
+import pe.edu.upc.jameofit.mealplan.presentation.view.TemplateDetailScreen
+import pe.edu.upc.jameofit.mealplan.presentation.view.TemplatesScreen
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 import pe.edu.upc.jameofit.tracking.presentation.view.MealActivityScreen
 import pe.edu.upc.jameofit.profile.presentation.view.ProfileScreen
@@ -57,6 +59,8 @@ private fun titleForRoute(route: String) = when {
     route.startsWith("messages") -> "Mensajes"
     route.startsWith("nutritionists") -> "Nutricionistas"
     route == DrawerRoute.PROFILE -> "Perfil"
+    route == DrawerRoute.TEMPLATES -> "Templates de Nutricionistas"  // ✅ NUEVO
+    route.startsWith("drawer/template_detail") -> "Detalle del Template"  // ✅ NUEVO
     route == DrawerRoute.EDIT_PREFERENCES -> "Editar Preferencias"
     route == DrawerRoute.GOALS -> "Gestionar objetivos"
     route == DrawerRoute.PROGRESS -> "Analíticas y estadísticas"
@@ -467,6 +471,43 @@ fun HomeNavHost(
                     onCancel = { homeNavController.popBackStack() }
                 )
             }
+            composable(DrawerRoute.TEMPLATES) {
+                val mealPlanVm: MealPlanViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getMealPlanViewModel() as T
+                        }
+                    }
+                )
+
+                TemplatesScreen(
+                    navController = homeNavController,
+                    viewModel = mealPlanVm
+                )
+            }
+
+            composable(
+                route = DrawerRoute.TEMPLATE_DETAIL
+            ) { backStackEntry ->
+                val templateId = backStackEntry.arguments?.getString("templateId")?.toLongOrNull() ?: 0L
+
+                val mealPlanVm: MealPlanViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getMealPlanViewModel() as T
+                        }
+                    }
+                )
+
+                TemplateDetailScreen(
+                    templateId = templateId,
+                    viewModel = mealPlanVm,
+                    authViewModel = authViewModel,
+                    navController = homeNavController
+                )
+            }
 
             composable(DrawerRoute.SUBSCRIPTIONS) { PlaceholderScreen("Suscripciones") }
             composable(DrawerRoute.FAQ) { FaqScreen() }
@@ -479,6 +520,7 @@ fun HomeNavHost(
             composable(RecipeRoute.BREAKFAST_DETAIL) { BreakfastRecipeDetailScreen() }
             composable(RecipeRoute.LUNCH_DETAIL) { LunchRecipeDetailScreen() }
             composable(RecipeRoute.DINNER_DETAIL) { DinnerRecipeDetailScreen() }
+
         }
     }
 }
