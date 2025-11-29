@@ -1,5 +1,6 @@
 package pe.edu.upc.jameofit.mealplan.presentation.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,16 +8,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
+import pe.edu.upc.jameofit.ui.theme.JameoBlue
 
 @Composable
 fun MealPlanDetailScreen(
     mealPlanId: Long,
     viewModel: MealPlanViewModel,
-    authViewModel: AuthViewModel,  // ✅ NUEVO: Necesario para obtener userId
+    authViewModel: AuthViewModel,
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
@@ -24,13 +29,10 @@ fun MealPlanDetailScreen(
     val entries by viewModel.entries.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-    val authUser by authViewModel.user.collectAsState()  // ✅ NUEVO
+    val authUser by authViewModel.user.collectAsState()
 
-    // ✅ NUEVO: Configurar userId en el ViewModel
     LaunchedEffect(authUser.id) {
-        if (authUser.id > 0) {
-            viewModel.setUserId(authUser.id)
-        }
+        if (authUser.id > 0) viewModel.setUserId(authUser.id)
     }
 
     LaunchedEffect(mealPlanId) {
@@ -39,8 +41,9 @@ fun MealPlanDetailScreen(
     }
 
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
+            .background(Color(0xFFF6F6FB))
             .padding(16.dp)
     ) {
         when {
@@ -59,89 +62,178 @@ fun MealPlanDetailScreen(
 
             else -> mealPlan?.let { plan ->
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    item {
-                        Text(
-                            text = plan.name,
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = plan.description)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = "Categoría: ${plan.category}")
-                        Text(text = "Calorías: ${plan.calories}")
-                        Text(text = "Carbohidratos: ${plan.carbs}")
-                        Text(text = "Proteínas: ${plan.proteins}")
-                        Text(text = "Grasas: ${plan.fats}")
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            text = "Recetas",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
 
-                    if (entries.isEmpty()) {
-                        item {
-                            Text(
-                                text = "Este meal plan aún no tiene recetas.",
-                                modifier = Modifier.padding(8.dp)
-                            )
-                        }
-                    } else {
-                        items(entries) { entry ->
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    // -------------------------
+                    //   🟦 HEADER DEL MEALPLAN
+                    // -------------------------
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(6.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White
+                            ),
+                            shape = MaterialTheme.shapes.large
+                        ) {
+                            Column(
+                                Modifier.padding(20.dp)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(
-                                        text = entry.recipeName ?: "Receta sin nombre",
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(text = "ID de receta: ${entry.recipeId}")
+                                Text(
+                                    text = plan.name,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = plan.description,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Gray
+                                )
+                                Spacer(Modifier.height(12.dp))
+
+                                Column(modifier = Modifier.fillMaxWidth()) {
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text("Calorías", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                            Text("${mealPlan?.calories} kcal", fontSize = 15.sp)
+                                        }
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text("Carbs", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                            Text("${mealPlan?.carbs} g", fontSize = 15.sp)
+                                        }
+
+                                    }
+
+                                }
+
+                                Column(modifier = Modifier.fillMaxWidth()) {
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text("Proteínas", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                            Text("${mealPlan?.proteins} g", fontSize = 15.sp)
+                                        }
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text("Grasas", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                            Text("${mealPlan?.fats} g", fontSize = 15.sp)
+                                        }
+                                    }
+
+
                                 }
                             }
                         }
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Text(
+                            text = "Recetas del plan",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    if (entries.isEmpty()) {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                elevation = CardDefaults.cardElevation(4.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(20.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        "Aún no tienes recetas agregadas",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        "Agrega recetas para completar tu plan",
+                                        color = Color.Gray,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        items(entries) { entry ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                elevation = CardDefaults.cardElevation(4.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                shape = MaterialTheme.shapes.medium
+                            ) {
+                                Column(Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = entry.recipeName ?: "Receta sin nombre",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = "Día: ${entry.day}",
+                                        color = Color.Gray
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 20.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Button(
                                 onClick = {
                                     navController.navigate("drawer/add_recipe_to_meal_plan/$mealPlanId")
-                                }
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = JameoBlue,
+                                    contentColor = Color.White
+                                )
                             ) {
-                                Text("Agregar Receta")
+                                Text("Agregar receta")
                             }
 
-                            // ✅ ACTUALIZADO: Borrar con limpieza de tracking
+                            Spacer(modifier = Modifier.width(12.dp))
+
                             Button(
                                 onClick = {
                                     viewModel.deleteMealPlanWithTracking(
                                         mealPlanId = mealPlanId,
                                         userId = authUser.id,
-                                        onSuccess = {
-                                            navController.popBackStack()
-                                        },
-                                        onError = { msg ->
-                                            // El error ya se muestra en el UI state
-                                        }
+                                        onSuccess = { navController.popBackStack() },
+                                        onError = {}
                                     )
                                 },
+                                modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ),
-                                enabled = !isLoading
+                                    containerColor = JameoBlue,
+                                    contentColor = Color.White
+                                )
                             ) {
-                                Text(if (isLoading) "Eliminando..." else "Eliminar")
+                                Text("Eliminar")
                             }
                         }
                     }

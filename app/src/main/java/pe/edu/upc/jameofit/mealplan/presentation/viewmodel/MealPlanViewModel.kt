@@ -1,13 +1,16 @@
 package pe.edu.upc.jameofit.mealplan.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import pe.edu.upc.jameofit.mealplan.data.model.AddRecipeRequest
 import pe.edu.upc.jameofit.mealplan.data.model.CreateMealPlanRequest
 import pe.edu.upc.jameofit.mealplan.data.model.MealPlanEntryResponse
 import pe.edu.upc.jameofit.mealplan.data.model.MealPlanResponse
+import pe.edu.upc.jameofit.mealplan.data.model.RecipeResponse
 import pe.edu.upc.jameofit.mealplan.data.repository.MealPlanRepository
 import pe.edu.upc.jameofit.tracking.data.repository.TrackingRepository
 
@@ -30,7 +33,10 @@ class MealPlanViewModel(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
-
+    private val _recipes = MutableStateFlow<List<RecipeResponse>>(emptyList())
+    val recipes: StateFlow<List<RecipeResponse>> = _recipes
+    private val _currentRecipe = MutableStateFlow<RecipeResponse?>(null)
+    val currentRecipe: StateFlow<RecipeResponse?> = _currentRecipe
     private var cachedTrackingId: Long? = null
     private var cachedUserId: Long? = null
 
@@ -173,16 +179,20 @@ class MealPlanViewModel(
 
     fun addRecipeToMealPlan(
         mealPlanId: Long,
-        recipeId: Int,
-        type: String,
-        day: Int,
+        request: AddRecipeRequest,
         onSuccess: () -> Unit = {},
         onError: (String) -> Unit = {}
     ) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val success = repository.addEntry(mealPlanId, recipeId, type, day)
+                val success = repository.addEntry(
+                    mealPlanId = mealPlanId,
+                    recipeId = request.recipeId,
+                    type = request.type,
+                    day = request.day
+                )
+
                 if (success) {
                     loadEntries(mealPlanId)
                     onSuccess()
@@ -191,6 +201,7 @@ class MealPlanViewModel(
                     _error.value = msg
                     onError(msg)
                 }
+
             } catch (e: Exception) {
                 val msg = "Error agregando receta: ${e.message}"
                 _error.value = msg
@@ -232,4 +243,50 @@ class MealPlanViewModel(
             }
         }
     }
+    fun loadRecipes() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                Log.d("MealPlanViewModel", "loadRecipes -> start")
+                val result = repository.getAllRecipes()
+                Log.d("MealPlanViewModel", "loadRecipes -> result count = ${result?.size ?: 0}")
+                _recipes.value = result ?: emptyList()
+                if (result.isNullOrEmpty()) {
+                    _error.value = null
+                }
+            } catch (e: Exception) {
+                Log.e("MealPlanViewModel", "loadRecipes -> exception: ${e.message}", e)
+                _error.value = "Error cargando recetas: ${e.message}"
+                _recipes.value = emptyList()
+            } finally {
+                _isLoading.value = false
+                Log.d("MealPlanViewModel", "loadRecipes -> finished")
+            }
+        }
+    }
+
+    fun loadRecipeById(recipeId: Long) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                Log.d("MealPlanViewModel", "loadRecipeById -> recipeId=$recipeId")
+                val recipe = repository.getRecipeById(recipeId)
+                _currentRecipe.value = recipe
+                if (recipe == null) {
+                    _error.value = "Receta no encontrada"
+                }
+            } catch (e: Exception) {
+                Log.e("MealPlanViewModel", "loadRecipeById -> exception: ${e.message}", e)
+                _error.value = "Error cargando receta: ${e.message}"
+                _currentRecipe.value = null
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun clearCurrentRecipe() {
+        _currentRecipe.value = null
+    }
+
 }

@@ -46,6 +46,7 @@ import pe.edu.upc.jameofit.mealplan.presentation.di.PresentationModule.getMealPl
 import pe.edu.upc.jameofit.mealplan.presentation.view.AddRecipeToMealPlanScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanCreateScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanDetailScreen
+import pe.edu.upc.jameofit.mealplan.presentation.view.RecipeDetailScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.TemplateDetailScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.TemplatesScreen
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
@@ -61,6 +62,7 @@ private fun titleForRoute(route: String) = when {
     route == DrawerRoute.PROFILE -> "Perfil"
     route == DrawerRoute.TEMPLATES -> "Templates de Nutricionistas"  // ✅ NUEVO
     route.startsWith("drawer/template_detail") -> "Detalle del Template"  // ✅ NUEVO
+    route.startsWith("drawer/recipe_detail") -> "Detalle de Receta"
     route == DrawerRoute.EDIT_PREFERENCES -> "Editar Preferencias"
     route == DrawerRoute.GOALS -> "Gestionar objetivos"
     route == DrawerRoute.PROGRESS -> "Analíticas y estadísticas"
@@ -466,9 +468,8 @@ fun HomeNavHost(
 
                 AddRecipeToMealPlanScreen(
                     mealPlanId = mealPlanId,
-                    viewModel = mealPlanVm,
-                    onRecipeAdded = { homeNavController.popBackStack() },
-                    onCancel = { homeNavController.popBackStack() }
+                    navController = homeNavController,
+                    mealPlanViewModel = mealPlanVm
                 )
             }
             composable(DrawerRoute.TEMPLATES) {
@@ -506,6 +507,29 @@ fun HomeNavHost(
                     viewModel = mealPlanVm,
                     authViewModel = authViewModel,
                     navController = homeNavController
+                )
+            }
+
+            composable(
+                route = DrawerRoute.RECIPE_DETAIL
+            ) { backStackEntry ->
+                val mealPlanId = backStackEntry.arguments?.getString("mealPlanId")?.toLongOrNull() ?: 0L
+                val recipeId = backStackEntry.arguments?.getString("recipeId")?.toLongOrNull() ?: 0L
+
+                val mealPlanVm: MealPlanViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getMealPlanViewModel() as T
+                        }
+                    }
+                )
+
+                RecipeDetailScreen(
+                    recipeId = recipeId,
+                    mealPlanId = mealPlanId,
+                    viewModel = mealPlanVm,
+                    onBack = { homeNavController.popBackStack() }
                 )
             }
 

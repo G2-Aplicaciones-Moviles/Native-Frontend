@@ -63,6 +63,7 @@ object DrawerRoute {
     const val MEAL_PLAN_CREATE = "drawer/meal_plan_create"
     const val MEAL_PLAN_DETAIL = "drawer/meal_plan_detail/{mealPlanId}"
     const val ADD_RECIPE_TO_MEAL_PLAN = "drawer/add_recipe_to_meal_plan/{mealPlanId}"
+    const val RECIPE_DETAIL = "drawer/recipe_detail/{mealPlanId}/{recipeId}"
     const val SUBSCRIPTIONS = "drawer/subscriptions"
     const val FAQ = "drawer/faq"
     const val SETTINGS = "drawer/settings"

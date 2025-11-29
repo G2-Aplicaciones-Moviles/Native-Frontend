@@ -4,6 +4,7 @@ import pe.edu.upc.jameofit.mealplan.data.model.AddRecipeRequest
 import pe.edu.upc.jameofit.mealplan.data.model.MealPlanResponse
 import pe.edu.upc.jameofit.mealplan.data.model.MealPlanEntryResponse
 import pe.edu.upc.jameofit.mealplan.data.model.CreateMealPlanRequest
+import pe.edu.upc.jameofit.mealplan.data.model.RecipeResponse
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -61,6 +62,14 @@ interface MealPlanService {
         @Path("trackingId") trackingId: Long,
         @Path("mealPlanEntryId") mealPlanEntryId: Long
     ): Response<Unit>
+
+    @GET("/api/v1/recipes")
+    suspend fun getAllRecipes(): Response<List<RecipeResponse>>
+
+    @GET("/api/v1/recipes/{recipeId}")
+    suspend fun getRecipeById(
+        @Path("recipeId") recipeId: Long
+    ): Response<RecipeResponse>
 }
 
 data class MealPlanTemplateResponse(

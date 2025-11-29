@@ -35,7 +35,6 @@ fun TemplatesScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    // Cargar templates al abrir la pantalla
     LaunchedEffect(Unit) {
         viewModel.loadTemplates()
     }

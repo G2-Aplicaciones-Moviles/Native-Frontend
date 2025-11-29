@@ -1,5 +1,6 @@
 package pe.edu.upc.jameofit.mealplan.data.repository
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import pe.edu.upc.jameofit.mealplan.data.remote.MealPlanService
@@ -34,7 +35,7 @@ class MealPlanRepository(
         if (response.isSuccessful) response.body() else null
     }
 
-    suspend fun addEntry(mealPlanId: Long, recipeId: Int, type: String, day: Int): Boolean = withContext(Dispatchers.IO) {
+    suspend fun addEntry(mealPlanId: Long, recipeId: Long, type: String, day: Int): Boolean = withContext(Dispatchers.IO) {
         val request = AddRecipeRequest(
             recipeId = recipeId.toLong(),
             type = type,
@@ -105,4 +106,39 @@ class MealPlanRepository(
         val response = api.getTemplatesDetailed()
         if (response.isSuccessful) response.body() else null
     }
+
+    suspend fun getAllRecipes(): List<RecipeResponse>? = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getAllRecipes()
+            if (response.isSuccessful) {
+                val body = response.body()
+                Log.d("MealPlanRepository", "getAllRecipes -> success, count=${body?.size ?: 0}")
+                body
+            } else {
+                Log.e("MealPlanRepository", "getAllRecipes -> error http ${response.code()} : ${response.errorBody()?.string()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("MealPlanRepository", "getAllRecipes -> exception: ${e.message}", e)
+            null
+        }
+    }
+
+    suspend fun getRecipeById(recipeId: Long): RecipeResponse? = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getRecipeById(recipeId)
+            if (response.isSuccessful) {
+                val body = response.body()
+                Log.d("MealPlanRepository", "getRecipeById -> success, recipe=${body?.name}")
+                body
+            } else {
+                Log.e("MealPlanRepository", "getRecipeById -> error http ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("MealPlanRepository", "getRecipeById -> exception: ${e.message}", e)
+            null
+        }
+    }
+
 }
