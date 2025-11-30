@@ -30,12 +30,6 @@ import pe.edu.upc.jameofit.goals.presentation.di.PresentationModule as GoalsPres
 import pe.edu.upc.jameofit.profile.presentation.di.PresentationModule as ProfilePresentationModule
 import pe.edu.upc.jameofit.nutritionists.presentation.view.NutritionistsScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.MealPlanScreen
-import pe.edu.upc.jameofit.recipe.presentation.view.BreakfastScreen
-import pe.edu.upc.jameofit.recipe.presentation.view.LunchScreen
-import pe.edu.upc.jameofit.recipe.presentation.view.DinnerScreen
-import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.BreakfastRecipeDetailScreen
-import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.DinnerRecipeDetailScreen
-import pe.edu.upc.jameofit.recipe.recipedetail.presentation.view.LunchRecipeDetailScreen
 import pe.edu.upc.jameofit.tracking.presentation.viewmodel.TrackingViewModel
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
@@ -53,6 +47,11 @@ import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 import pe.edu.upc.jameofit.tracking.presentation.view.MealActivityScreen
 import pe.edu.upc.jameofit.profile.presentation.view.ProfileScreen
 import pe.edu.upc.jameofit.profile.presentation.view.EditProfileScreen
+import pe.edu.upc.jameofit.recipe.presentation.di.PresentationModule.getRecipeViewModel
+import pe.edu.upc.jameofit.recipe.presentation.view.RecipeCreateScreen
+import pe.edu.upc.jameofit.recipe.presentation.view.RecipeListScreen
+import pe.edu.upc.jameofit.recipe.presentation.view.RecipeTemplatesScreen
+import pe.edu.upc.jameofit.recipe.presentation.viewmodel.RecipeViewModel
 
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
@@ -60,19 +59,19 @@ private fun titleForRoute(route: String) = when {
     route.startsWith("messages") -> "Mensajes"
     route.startsWith("nutritionists") -> "Nutricionistas"
     route == DrawerRoute.PROFILE -> "Perfil"
-    route == DrawerRoute.TEMPLATES -> "Templates de Nutricionistas"  // ✅ NUEVO
+    route == DrawerRoute.TEMPLATES -> "Templates de Nutricionistas"
+    route == DrawerRoute.RECIPE_TEMPLATES -> "Recetas de Expertos"// ✅ NUEVO
     route.startsWith("drawer/template_detail") -> "Detalle del Template"  // ✅ NUEVO
     route.startsWith("drawer/recipe_detail") -> "Detalle de Receta"
     route == DrawerRoute.EDIT_PREFERENCES -> "Editar Preferencias"
     route == DrawerRoute.GOALS -> "Gestionar objetivos"
-    route == DrawerRoute.PROGRESS -> "Analíticas y estadísticas"
     route == DrawerRoute.MEAL_PLANS -> "Planes de alimentación"
-    route == RecipeRoute.BREAKFAST -> "Desayuno"
-    route == RecipeRoute.LUNCH -> "Almuerzo"
-    route == RecipeRoute.DINNER -> "Cena"
+    route.startsWith(RecipeRoute.RECIPE_LIST.substringBefore("/{")) -> {
+        "Recetas por Categoría"
+    }
+    route.startsWith(DrawerRoute.RECIPE_CREATE.substringBefore("/{")) -> "Crear Receta"
     route == DrawerRoute.SUBSCRIPTIONS -> "Suscripciones"
     route == DrawerRoute.FAQ -> "Preguntas frecuentes"
-    route == DrawerRoute.SETTINGS -> "Ajustes"
     else -> "Inicio"
 }
 
@@ -103,15 +102,10 @@ fun HomeNavHost(
         DrawerRoute.PROFILE,
         DrawerRoute.EDIT_PREFERENCES,
         DrawerRoute.GOALS,
-        DrawerRoute.PROGRESS,
         DrawerRoute.MEAL_PLANS,
         DrawerRoute.SUBSCRIPTIONS,
         DrawerRoute.FAQ,
-        DrawerRoute.SETTINGS,
-        DrawerRoute.RECOMMENDATIONS,
-        RecipeRoute.BREAKFAST,
-        RecipeRoute.LUNCH,
-        RecipeRoute.DINNER -> currentRoute
+        DrawerRoute.RECOMMENDATIONS, -> currentRoute
         else -> TabGraph.TRACKING
     }
 
@@ -130,14 +124,9 @@ fun HomeNavHost(
                 DrawerRoute.PROFILE,
                 DrawerRoute.EDIT_PREFERENCES,
                 DrawerRoute.GOALS,
-                DrawerRoute.PROGRESS,
                 DrawerRoute.MEAL_PLANS,
                 DrawerRoute.SUBSCRIPTIONS,
-                DrawerRoute.FAQ,
-                DrawerRoute.SETTINGS,
-                RecipeRoute.BREAKFAST,
-                RecipeRoute.LUNCH,
-                RecipeRoute.DINNER -> true
+                DrawerRoute.FAQ, -> true
                 else -> false
             }
             if (isDrawer) {
@@ -329,7 +318,6 @@ fun HomeNavHost(
                 )
             }
 
-            composable(DrawerRoute.PROGRESS) { PlaceholderScreen("Analíticas y estadísticas") }
 
             composable(DrawerRoute.MEAL_PLANS) {
                 val mealPlanVm: MealPlanViewModel = viewModel(
@@ -535,15 +523,83 @@ fun HomeNavHost(
 
             composable(DrawerRoute.SUBSCRIPTIONS) { PlaceholderScreen("Suscripciones") }
             composable(DrawerRoute.FAQ) { FaqScreen() }
-            composable(DrawerRoute.SETTINGS) { PlaceholderScreen("Ajustes") }
 
-            composable(RecipeRoute.BREAKFAST) { BreakfastScreen(navController = homeNavController) }
-            composable(RecipeRoute.LUNCH) { LunchScreen(navController = homeNavController) }
-            composable(RecipeRoute.DINNER) { DinnerScreen(navController = homeNavController) }
+            composable(
+                route = RecipeRoute.RECIPE_LIST
+            ) { backStackEntry ->
+                val categoryId = backStackEntry.arguments?.getString("categoryId")?.toLongOrNull() ?: 0L
+                val categoryTitle = backStackEntry.arguments?.getString("categoryTitle") ?: "Recetas"
 
-            composable(RecipeRoute.BREAKFAST_DETAIL) { BreakfastRecipeDetailScreen() }
-            composable(RecipeRoute.LUNCH_DETAIL) { LunchRecipeDetailScreen() }
-            composable(RecipeRoute.DINNER_DETAIL) { DinnerRecipeDetailScreen() }
+                val authUser by authViewModel.user.collectAsState()
+
+                // Usamos el ViewModel de Recipe
+                val recipeVm: RecipeViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getRecipeViewModel() as T // Importado de pe.edu.upc.jameofit.recipe.presentation.di
+                        }
+                    }
+                )
+
+                RecipeListScreen(
+                    navController = homeNavController,
+                    categoryId = categoryId,
+                    categoryTitle = categoryTitle,
+                    viewModel = recipeVm,
+                    currentUserId = authUser.id
+                )
+            }
+
+            composable(DrawerRoute.RECIPE_TEMPLATES) {
+
+                val authUser by authViewModel.user.collectAsState()
+                val userId = authUser.id
+
+                val recipeVm: RecipeViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getRecipeViewModel() as T
+                        }
+                    }
+                )
+
+                RecipeTemplatesScreen(
+                    navController = homeNavController,
+                    viewModel = recipeVm,
+                    currentNutritionistId = userId
+                )
+            }
+
+            composable(
+                route = DrawerRoute.RECIPE_CREATE
+            ) { backStackEntry ->
+                val categoryId = backStackEntry.arguments?.getString("categoryId")?.toLongOrNull() ?: 0L
+                val userId = backStackEntry.arguments?.getString("userId")?.toLongOrNull() ?: 0L
+
+                val recipeVm: RecipeViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return getRecipeViewModel() as T
+                        }
+                    }
+                )
+
+                RecipeCreateScreen(
+                    currentUserId = userId,
+                    initialCategoryId = categoryId,
+                    viewModel = recipeVm,
+                    onRecipeCreated = {
+                        // Tras crear, volvemos a la lista de recetas (o a la pantalla principal)
+                        homeNavController.popBackStack()
+                    },
+                    onBack = {
+                        homeNavController.popBackStack()
+                    }
+                )
+            }
 
         }
     }

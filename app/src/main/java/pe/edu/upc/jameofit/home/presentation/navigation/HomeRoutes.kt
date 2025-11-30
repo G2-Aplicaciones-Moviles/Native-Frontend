@@ -41,13 +41,7 @@ object TrackingRoute {
 }
 
 object RecipeRoute {
-    const val BREAKFAST = "recipe/breakfast"
-    const val LUNCH = "recipe/lunch"
-    const val DINNER = "recipe/dinner"
-
-    const val BREAKFAST_DETAIL = "recipe/breakfast_detail"
-    const val LUNCH_DETAIL = "recipe/lunch_detail"
-    const val DINNER_DETAIL = "recipe/dinner_detail"
+    const val RECIPE_LIST = "recipe_list/{categoryId}/{categoryTitle}"
 }
 
 
@@ -58,7 +52,6 @@ object DrawerRoute {
     const val PROFILE = "drawer/profile"
     const val EDIT_PREFERENCES = "drawer/edit_preferences"  // ✅ AGREGAR
     const val GOALS = "drawer/goals"
-    const val PROGRESS = "drawer/progress"
     const val MEAL_PLANS = "drawer/meal_plans"
     const val MEAL_PLAN_CREATE = "drawer/meal_plan_create"
     const val MEAL_PLAN_DETAIL = "drawer/meal_plan_detail/{mealPlanId}"
@@ -66,8 +59,9 @@ object DrawerRoute {
     const val RECIPE_DETAIL = "drawer/recipe_detail/{mealPlanId}/{recipeId}"
     const val SUBSCRIPTIONS = "drawer/subscriptions"
     const val FAQ = "drawer/faq"
-    const val SETTINGS = "drawer/settings"
     const val RECOMMENDATIONS = "drawer/recommendations"
     const val TEMPLATES = "drawer/templates"
     const val TEMPLATE_DETAIL = "drawer/template_detail/{templateId}"
+    const val RECIPE_CREATE = "recipe_create/{categoryId}/{userId}"
+    const val RECIPE_TEMPLATES = "drawer/recipe_templates"
 }

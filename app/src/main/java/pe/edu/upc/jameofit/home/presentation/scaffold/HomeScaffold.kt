@@ -97,17 +97,6 @@ fun HomeScaffold(
                         )
                     }
                 )
-                NavigationDrawerItem(
-                    label = { Text("Analíticas  y Estadísticas") },
-                    selected = currentDestination == DrawerRoute.PROGRESS,
-                    onClick = { closeAnd { onNavigateDrawer(DrawerRoute.PROGRESS) } },
-                    icon = {
-                        Icon(
-                            painterResource(id = R.drawable.analytics),
-                            contentDescription = null
-                        )
-                    }
-                )
 
                 NavigationDrawerItem(
                     label = { Text("Mis Recomendaciones") },
@@ -144,17 +133,6 @@ fun HomeScaffold(
                     selected = currentDestination == DrawerRoute.FAQ,
                     onClick = { closeAnd { onNavigateDrawer(DrawerRoute.FAQ) } },
                     icon = { Icon(painterResource(id = R.drawable.faq), contentDescription = null) }
-                )
-                NavigationDrawerItem(
-                    label = { Text("Ajustes") },
-                    selected = currentDestination == DrawerRoute.SETTINGS,
-                    onClick = { closeAnd { onNavigateDrawer(DrawerRoute.SETTINGS) } },
-                    icon = {
-                        Icon(
-                            painterResource(id = R.drawable.settings),
-                            contentDescription = null
-                        )
-                    }
                 )
 
                 Spacer(Modifier.weight(1f))

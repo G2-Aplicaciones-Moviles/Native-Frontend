@@ -100,7 +100,7 @@ fun MealPlanCreateScreen(
                                 carbs = 0.1,
                                 proteins = 0.1,
                                 fats = 0.1,
-                                profileId = profile.id, // <-- AQUÍ el id del perfil
+                                profileId = profile.id,
                                 category = category,
                                 isCurrent = isCurrent,
                                 tags = tagsText.split(",")

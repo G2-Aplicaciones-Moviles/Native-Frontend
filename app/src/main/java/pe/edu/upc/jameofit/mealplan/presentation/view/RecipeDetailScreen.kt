@@ -63,6 +63,8 @@ fun RecipeDetailScreen(
         return
     }
 
+    val isAddingMode = mealPlanId != 0L
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -94,9 +96,9 @@ fun RecipeDetailScreen(
                 Spacer(Modifier.height(14.dp))
 
                 InfoRow("Preparation Time", "${recipe!!.preparationTime} min")
-                InfoRow("Difficulty", recipe!!.difficulty)
-                InfoRow("Category", recipe!!.category)
-                InfoRow("Recipe Type", recipe!!.recipeType)
+                InfoRow("Difficulty", recipe!!.difficulty ?: "")
+                InfoRow("Category", recipe!!.category ?: "")
+                InfoRow("Recipe Type", recipe!!.recipeType ?: "")
 
                 Spacer(Modifier.height(14.dp))
 
@@ -115,37 +117,52 @@ fun RecipeDetailScreen(
         Spacer(Modifier.height(20.dp))
 
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        if (isAddingMode) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Button(
+                    onClick = { showDialog = true },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = JameoBlue,
+                        contentColor = Color.White
+                    )
+                ) { Text("Agregar") }
+
+                Spacer(Modifier.width(16.dp))
+
+                OutlinedButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = JameoBlue,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        } else {
             Button(
-                onClick = { showDialog = true },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = JameoBlue,
-                    contentColor = Color.White
-                )
-            ) { Text("Agregar") }
-
-            Spacer(Modifier.width(16.dp))
-
-            OutlinedButton(
                 onClick = onBack,
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = JameoBlue,
                     contentColor = Color.White
                 )
-            ) { Text("Cancelar") }
+            ) { Text("Volver") }
         }
     }
 
-    if (showDialog) {
+    if (showDialog && isAddingMode) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("Add to Meal Plan") },

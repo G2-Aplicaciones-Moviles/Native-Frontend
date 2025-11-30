@@ -27,6 +27,7 @@ import pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState
 import pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileViewModel
 
 data class RecipeCategory(
+    val id: Long,
     val title: String,
     val imageRes: Int,
     val route: String
@@ -65,10 +66,53 @@ fun MealPlanScreen(
     }
 
     val categories = listOf(
-        RecipeCategory("Desayunos", R.drawable.desayuno, RecipeRoute.BREAKFAST),
-        RecipeCategory("Almuerzos", R.drawable.almuerzo, RecipeRoute.LUNCH),
-        RecipeCategory("Cenas", R.drawable.cena, RecipeRoute.DINNER)
+        // ID 1: Desayuno
+        RecipeCategory(
+            id = 1L,
+            title = "Desayunos",
+            imageRes = R.drawable.desayuno,
+            route = "recipe_list/1/Desayunos"
+        ),
+        // ID 2: Almuerzo
+        RecipeCategory(
+            id = 2L,
+            title = "Almuerzos",
+            imageRes = R.drawable.almuerzo,
+            route = "recipe_list/2/Almuerzos"
+        ),
+        // ID 3: Cena
+        RecipeCategory(
+            id = 3L,
+            title = "Cenas",
+            imageRes = R.drawable.cena,
+            route = "recipe_list/3/Cenas"
+        ),
+        RecipeCategory(
+            id = 4L,
+            title = "Snacks",
+            imageRes = R.drawable.desayuno,
+            route = "recipe_list/4/Snacks"
+        ),
+        RecipeCategory(
+            id = 5L,
+            title = "Postres",
+            imageRes = R.drawable.desayuno,
+            route = "recipe_list/5/Postres"
+        )
     )
+
+// ...
+
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(categories) { cat ->
+            Card(
+                modifier = Modifier
+                    // ...
+                    .clickable { navController.navigate(cat.route) }, // cat.route = "recipe_list/1/Desayunos"
+                // ...
+            ) { /* ... */ }
+        }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -119,6 +163,33 @@ fun MealPlanScreen(
                         }
                     }
                 }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = "Visualizar recetas creadas por nutricionistas",
+                fontSize = 14.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Button(
+                onClick = { navController.navigate(DrawerRoute.RECIPE_TEMPLATES) }, // 🆕 Usaremos una nueva ruta: RECIPE_TEMPLATES
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF2196F3),
+                    contentColor = Color.White
+                ),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    "Ver Recetas de Expertos",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(Modifier.height(24.dp))
