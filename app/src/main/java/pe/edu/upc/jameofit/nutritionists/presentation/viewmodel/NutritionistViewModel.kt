@@ -24,15 +24,54 @@ class NutritionistViewModel(
     fun loadNutritionists() {
         viewModelScope.launch {
             _loading.value = true
-            _list.value = repository.getNutritionists()
-            _loading.value = false
+            try {
+                _list.value = repository.getNutritionists()
+            } catch (e: Exception) {
+                _message.value = "Error al cargar nutricionistas"
+                e.printStackTrace()
+            } finally {
+                _loading.value = false
+            }
         }
     }
 
-    fun sendContact(patientId: Long, nutritionistId: Long) {
+    fun sendContact(
+        patientUserId: Long,
+        nutritionistId: Long,
+        serviceType: String,
+        startDate: String? = null,
+        scheduledAt: String? = null
+    ) {
         viewModelScope.launch {
-            val ok = repository.sendContact(patientId, nutritionistId)
-            _message.value = if (ok) "Solicitud enviada" else "Error al enviar"
+            _loading.value = true
+            try {
+                val ok = repository.sendContact(
+                    patientUserId = patientUserId,
+                    nutritionistId = nutritionistId,
+                    serviceType = serviceType,
+                    startDate = startDate,
+                    scheduledAt = scheduledAt
+                )
+                _message.value = if (ok) {
+                    "Solicitud enviada exitosamente"
+                } else {
+                    "Error al enviar la solicitud"
+                }
+
+                // Recargar la lista después de enviar solicitud
+                if (ok) {
+                    loadNutritionists()
+                }
+            } catch (e: Exception) {
+                _message.value = "Error de conexión: ${e.message}"
+                e.printStackTrace()
+            } finally {
+                _loading.value = false
+            }
         }
+    }
+
+    fun clearMessage() {
+        _message.value = null
     }
 }

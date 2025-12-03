@@ -16,17 +16,33 @@ class NutritionistRepository(
             res.body() ?: emptyList()
         }
 
-    suspend fun sendContact(patientId: Long, nutritionistId: Long): Boolean =
+    suspend fun sendContact(
+        patientUserId: Long,
+        nutritionistId: Long,
+        serviceType: String,
+        startDate: String? = null,
+        scheduledAt: String? = null
+    ): Boolean =
         withContext(Dispatchers.IO) {
             try {
                 val body = CreateNutritionistPatientRequest(
-                    patientId = patientId,
-                    nutritionistId = nutritionistId
+                    patientUserId = patientUserId,
+                    nutritionistId = nutritionistId,
+                    serviceType = serviceType,
+                    startDate = startDate,
+                    scheduledAt = scheduledAt
                 )
                 val response = api.sendContactRequest(body)
                 response.isSuccessful
             } catch (e: Exception) {
+                e.printStackTrace()
                 false
             }
+        }
+
+    suspend fun getNutritionistsOfPatient(patientId: Long): List<NutritionistResponse> =
+        withContext(Dispatchers.IO) {
+            val res = api.getNutritionistsOfPatient(patientId)
+            res.body() ?: emptyList()
         }
 }
