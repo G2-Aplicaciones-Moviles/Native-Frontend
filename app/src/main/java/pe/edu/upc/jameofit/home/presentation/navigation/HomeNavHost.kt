@@ -44,6 +44,7 @@ import pe.edu.upc.jameofit.mealplan.presentation.view.RecipeDetailScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.TemplateDetailScreen
 import pe.edu.upc.jameofit.mealplan.presentation.view.TemplatesScreen
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
+import pe.edu.upc.jameofit.nutritionists.presentation.viewmodel.NutritionistViewModel
 import pe.edu.upc.jameofit.tracking.presentation.view.MealActivityScreen
 import pe.edu.upc.jameofit.profile.presentation.view.ProfileScreen
 import pe.edu.upc.jameofit.profile.presentation.view.EditProfileScreen
@@ -229,10 +230,29 @@ fun HomeNavHost(
                 startDestination = HomeRoute.NUTRITIONISTS,
                 route = TabGraph.NUTRITIONISTS
             ) {
-                composable(HomeRoute.NUTRITIONISTS) { NutritionistsScreen() }
+                composable(route = HomeRoute.NUTRITIONISTS) {
+
+                    val authUser by authViewModel.user.collectAsState()
+                    val patientUserId = authUser.id
+
+                    val vm: NutritionistViewModel = viewModel(
+                        factory = object : ViewModelProvider.Factory {
+                            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                return pe.edu.upc.jameofit.nutritionists.presentation.di.PresentationModule
+                                    .getNutritionistViewModel() as T
+                            }
+                        }
+                    )
+
+                    NutritionistsScreen(
+                        viewModel = vm,
+                        patientUserId = patientUserId
+                    )
+                }
+
             }
 
-            // ✅ Pantalla de Perfil
+                // ✅ Pantalla de Perfil
             composable(DrawerRoute.PROFILE) {
                 val profileVm: pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
