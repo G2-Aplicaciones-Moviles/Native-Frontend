@@ -1,16 +1,24 @@
 package pe.edu.upc.jameofit.nutritionists.presentation.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import pe.edu.upc.jameofit.nutritionists.data.model.NutritionistResponse
 import pe.edu.upc.jameofit.nutritionists.presentation.viewmodel.NutritionistViewModel
+import pe.edu.upc.jameofit.ui.theme.JameoGreen
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,52 +41,104 @@ fun NutritionistsScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Text(
-                "Nutricionistas Disponibles",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
 
-            if (loading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (list.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "No hay nutricionistas disponibles",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(list) { nut ->
-                        NutritionistCard(
-                            nutritionist = nut,
-                            onContactClick = {
-                                selectedNutritionist = nut
-                                showServiceDialog = true
-                            }
+        // -------------------------
+        // HEADER MODERNO PREMIUM
+        // -------------------------
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            JameoGreen,
+                            JameoGreen.copy(alpha = 0.85f),
+                            JameoGreen.copy(alpha = 0.7f),
                         )
+                    )
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(24.dp)
+            ) {
+                Text(
+                    "Nutricionistas",
+                    fontSize = 32.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    "Encuentra tu especialista ideal",
+                    color = Color.White.copy(alpha = 0.85f)
+                )
+            }
+        }
+
+        // -------------------------
+        // LISTA SOBRE TARJETA GLASS
+        // -------------------------
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 140.dp)
+                .background(Color(0xFFF5F7F6))
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(
+                    Color.White.copy(alpha = 0.9f)
+                ),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                Column(Modifier.padding(20.dp)) {
+
+                    if (loading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(30.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = JameoGreen)
+                        }
+                    }
+                    else if (list.isEmpty()) {
+                        Text(
+                            "No hay nutricionistas disponibles",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(20.dp),
+                            color = Color.Gray
+                        )
+                    }
+                    else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(list) { nut ->
+                                NutritionistCardPremium(
+                                    nutritionist = nut,
+                                    onContactClick = {
+                                        selectedNutritionist = nut
+                                        showServiceDialog = true
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // Snackbar para mensajes
+        // -------------------------
+        // SNACKBAR
+        // -------------------------
         message?.let { msg ->
             Snackbar(
                 modifier = Modifier
@@ -95,9 +155,11 @@ fun NutritionistsScreen(
         }
     }
 
-    // Diálogo para seleccionar tipo de servicio
+    // -------------------------
+    // DIALOGS LOGIC
+    // -------------------------
     if (showServiceDialog && selectedNutritionist != null) {
-        ServiceSelectionDialog(
+        ServiceSelectionDialogPremium(
             onDismiss = {
                 showServiceDialog = false
                 selectedNutritionist = null
@@ -110,9 +172,8 @@ fun NutritionistsScreen(
         )
     }
 
-    // Diálogo para seleccionar fecha
     if (showDatePicker && selectedNutritionist != null && selectedServiceType != null) {
-        DatePickerDialog(
+        DatePickerDialogPremium(
             onDismiss = {
                 showDatePicker = false
                 selectedNutritionist = null
@@ -120,28 +181,22 @@ fun NutritionistsScreen(
             },
             onDateSelected = { dateString ->
                 when (selectedServiceType) {
-                    "DIET_PLAN" -> {
-                        viewModel.sendContact(
-                            patientUserId = patientUserId,
-                            nutritionistId = selectedNutritionist!!.id,
-                            serviceType = "DIET_PLAN",
-                            startDate = dateString,
-                            scheduledAt = null
-                        )
-                    }
-                    "PERSONAL_CONSULT" -> {
-                        viewModel.sendContact(
-                            patientUserId = patientUserId,
-                            nutritionistId = selectedNutritionist!!.id,
-                            serviceType = "PERSONAL_CONSULT",
-                            startDate = null,
-                            scheduledAt = dateString
-                        )
-                    }
+                    "DIET_PLAN" -> viewModel.sendContact(
+                        patientUserId,
+                        selectedNutritionist!!.id,
+                        "DIET_PLAN",
+                        dateString,
+                        null
+                    )
+                    "PERSONAL_CONSULT" -> viewModel.sendContact(
+                        patientUserId,
+                        selectedNutritionist!!.id,
+                        "PERSONAL_CONSULT",
+                        null,
+                        dateString
+                    )
                 }
                 showDatePicker = false
-                selectedNutritionist = null
-                selectedServiceType = null
             },
             serviceType = selectedServiceType!!
         )
@@ -149,62 +204,65 @@ fun NutritionistsScreen(
 }
 
 @Composable
-fun NutritionistCard(
+fun NutritionistCardPremium(
     nutritionist: NutritionistResponse,
     onContactClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(Color.White),
+        elevation = CardDefaults.cardElevation(6.dp)
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(
+            Modifier
+                .padding(18.dp)
+                .fillMaxWidth()
+        ) {
+
+            // Nombre grande y moderno
             Text(
                 nutritionist.fullName ?: "Nutricionista",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = JameoGreen
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
 
-            if (nutritionist.speciality != null) {
-                InfoRow(label = "Especialidad", value = nutritionist.speciality)
+            nutritionist.speciality?.let {
+                InfoRowPremium("Especialidad", it)
             }
-
-            if (nutritionist.experiencesYears != null && nutritionist.experiencesYears > 0) {
-                InfoRow(label = "Experiencia", value = "${nutritionist.experiencesYears} años")
+            nutritionist.experiencesYears?.let { years ->
+                if (years > 0) InfoRowPremium("Experiencia", "$years años")
             }
-
-            if (nutritionist.licenseNumber != null) {
-                InfoRow(
-                    label = "Licencia",
-                    value = nutritionist.licenseNumber,
-                    valueColor = MaterialTheme.colorScheme.secondary
-                )
+            nutritionist.licenseNumber?.let {
+                InfoRowPremium("Licencia", it, valueColor = JameoGreen)
             }
 
             if (!nutritionist.bio.isNullOrBlank()) {
                 Spacer(Modifier.height(8.dp))
                 Text(
                     nutritionist.bio,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
             Spacer(Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
+            // Botón mejorado
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Button(
                     onClick = onContactClick,
-                    enabled = nutritionist.acceptingNewPatients == true
+                    enabled = nutritionist.acceptingNewPatients == true,
+                    colors = ButtonDefaults.buttonColors(containerColor = JameoGreen),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        if (nutritionist.acceptingNewPatients == true)
-                            "Contactar"
-                        else
-                            "No Disponible"
+                        if (nutritionist.acceptingNewPatients == true) "Contactar"
+                        else "No Disponible",
+                        color = Color.White
                     )
                 }
             }
@@ -213,140 +271,100 @@ fun NutritionistCard(
 }
 
 @Composable
-fun InfoRow(
-    label: String,
-    value: String,
-    valueColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
-) {
+fun InfoRowPremium(label: String, value: String, valueColor: Color = Color.Black) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            "$label:",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
-        )
-        Text(
-            value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = valueColor
-        )
+        Text(label + ":", fontWeight = FontWeight.Medium, color = Color.DarkGray)
+        Text(value, fontWeight = FontWeight.Bold, color = valueColor)
     }
     Spacer(Modifier.height(4.dp))
 }
 
 @Composable
-fun ServiceSelectionDialog(
+fun ServiceSelectionDialogPremium(
     onDismiss: () -> Unit,
     onServiceSelected: (String) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Selecciona el tipo de servicio") },
+        title = {
+            Text("Selecciona un servicio", fontWeight = FontWeight.Bold)
+        },
         text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    "¿Qué tipo de servicio deseas solicitar?",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
 
-                ServiceOptionButton(
+                PremiumServiceOption(
                     title = "Plan de Dieta",
-                    description = "Recibe un plan nutricional personalizado",
+                    description = "Plan personalizado según tus objetivos",
                     onClick = { onServiceSelected("DIET_PLAN") }
                 )
 
-                ServiceOptionButton(
+                PremiumServiceOption(
                     title = "Consulta Personal",
-                    description = "Agenda una consulta individual",
+                    description = "Agenda una cita con el especialista",
                     onClick = { onServiceSelected("PERSONAL_CONSULT") }
                 )
             }
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
+            TextButton(onClick = onDismiss) { Text("Cerrar") }
         }
     )
 }
 
 @Composable
-fun ServiceOptionButton(
-    title: String,
-    description: String,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+fun PremiumServiceOption(title: String, description: String, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(Color(0xFFF9FBFA)),
+        elevation = CardDefaults.cardElevation(4.dp),
+        onClick = onClick
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(vertical = 8.dp)
-        ) {
-            Text(title, fontWeight = FontWeight.Bold)
+        Column(Modifier.padding(16.dp)) {
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = JameoGreen)
             Spacer(Modifier.height(4.dp))
-            Text(
-                description,
-                style = MaterialTheme.typography.bodySmall
-            )
+            Text(description, color = Color.Gray)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DatePickerDialog(
+fun DatePickerDialogPremium(
     onDismiss: () -> Unit,
     onDateSelected: (String) -> Unit,
     serviceType: String
 ) {
-    val datePickerState = rememberDatePickerState()
-    val dateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+    val state = rememberDatePickerState()
+    val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                if (serviceType == "DIET_PLAN")
-                    "Fecha de inicio del plan"
-                else
-                    "Fecha de la consulta"
+                if (serviceType == "DIET_PLAN") "Fecha de inicio"
+                else "Fecha de consulta",
+                fontWeight = FontWeight.Bold
             )
         },
         text = {
-            DatePicker(
-                state = datePickerState,
-                modifier = Modifier.fillMaxWidth()
-            )
+            DatePicker(state = state)
         },
         confirmButton = {
-            TextButton(
-                onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        val date = Date(millis)
-                        val formattedDate = dateFormatter.format(date)
-                        onDateSelected(formattedDate)
-                    } ?: run {
-                        // Si no hay fecha seleccionada, usar la fecha actual
-                        val formattedDate = dateFormatter.format(Date())
-                        onDateSelected(formattedDate)
-                    }
-                }
-            ) {
-                Text("Confirmar")
+            TextButton(onClick = {
+                val millis = state.selectedDateMillis ?: System.currentTimeMillis()
+                onDateSelected(formatter.format(Date(millis)))
+            }) {
+                Text("Confirmar", color = JameoGreen)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
 }
+

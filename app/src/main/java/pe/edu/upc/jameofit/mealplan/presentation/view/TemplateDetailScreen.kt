@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
+import pe.edu.upc.jameofit.shared.data.local.UserSessionStorage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +35,8 @@ fun TemplateDetailScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val authUser by authViewModel.user.collectAsState()
+    val profileId = remember { UserSessionStorage.getProfileId() }
+
 
     var showAssignDialog by remember { mutableStateOf(false) }
 
@@ -333,9 +336,25 @@ fun TemplateDetailScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // TODO: Llamar al endpoint de asignar template
-                        // navController.navigate("assign_template/${templateId}/${authUser.id}")
                         showAssignDialog = false
+
+                        val profileId = UserSessionStorage.getProfileId()
+
+                        if (profileId == null || profileId <= 0L) {
+                            println("Error: no se encontró el profileId en UserSessionStorage")
+                            return@TextButton
+                        }
+
+                        viewModel.assignMealPlanToProfile(
+                            mealPlanId = templateId,
+                            profileId = profileId,
+                            onSuccess = {
+                                navController.popBackStack()
+                            },
+                            onError = {
+                                println("Error asignando plan: $it")
+                            }
+                        )
                     }
                 ) {
                     Text("Asignar", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
@@ -348,6 +367,7 @@ fun TemplateDetailScreen(
             }
         )
     }
+
 }
 
 @Composable

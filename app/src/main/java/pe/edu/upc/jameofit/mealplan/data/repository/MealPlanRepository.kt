@@ -141,4 +141,14 @@ class MealPlanRepository(
         }
     }
 
+    suspend fun assignMealPlanToProfile(
+        mealPlanId: Long,
+        profileId: Long
+    ): MealPlanResponse? = withContext(Dispatchers.IO) {
+
+        val response = api.assignMealPlanToProfile(mealPlanId, profileId)
+        if (response.isSuccessful) response.body() else null
+    }
+
+
 }

@@ -1,8 +1,10 @@
 package pe.edu.upc.jameofit.mealplan.presentation.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -11,12 +13,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import pe.edu.upc.jameofit.mealplan.data.model.AddRecipeRequest
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 import pe.edu.upc.jameofit.ui.theme.JameoBlue
+import pe.edu.upc.jameofit.ui.theme.JameoGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,33 +38,35 @@ fun RecipeDetailScreen(
     var selectedType by remember { mutableStateOf("") }
     var selectedDay by remember { mutableStateOf(1) }
 
-    LaunchedEffect(recipeId) {
-        viewModel.loadRecipeById(recipeId)
-    }
+    LaunchedEffect(recipeId) { viewModel.loadRecipeById(recipeId) }
 
     DisposableEffect(Unit) {
         onDispose { viewModel.clearCurrentRecipe() }
     }
 
+    // -------------------------------
+    // LOADING
+    // -------------------------------
     if (isLoading) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
+        ) { CircularProgressIndicator(color = JameoGreen) }
         return
     }
 
+    // -------------------------------
+    // NOT FOUND STATE
+    // -------------------------------
     if (recipe == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Recipe not found")
+                Text("Receta no encontrada")
                 Spacer(Modifier.height(8.dp))
-                Button(onClick = onBack) { Text("Go Back") }
+                Button(onClick = onBack) { Text("Volver") }
             }
         }
         return
@@ -69,56 +76,90 @@ fun RecipeDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Detalle receta", fontWeight = FontWeight.Bold, fontSize = MaterialTheme.typography.headlineSmall.fontSize) },
-                navigationIcon = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                JameoGreen,
+                                JameoGreen.copy(alpha = 0.85f),
+                                JameoGreen.copy(alpha = 0.65f),
+                            )
+                        )
+                    )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = Color.White
+                        )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF4CAF50),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
-            )
+                    Text(
+                        "Detalle de Receta",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+            }
         }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
                 .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+                .padding(top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
 
-            Spacer(Modifier.height(8.dp))
-
+            // -------------------------------
+            // CARD PRINCIPAL GLASS
+            // -------------------------------
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.extraLarge,
-                elevation = CardDefaults.cardElevation(4.dp)
+                shape = RoundedCornerShape(22.dp),
+                elevation = CardDefaults.cardElevation(10.dp),
+                colors = CardDefaults.cardColors(Color.White.copy(alpha = 0.95f))
             ) {
+
                 Column(modifier = Modifier.padding(20.dp)) {
 
                     Text(
                         recipe!!.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = MaterialTheme.typography.headlineSmall.fontSize
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 26.sp,
+                        color = JameoGreen
                     )
 
-                    Spacer(Modifier.height(6.dp))
-                    Text(recipe!!.description)
+                    Spacer(Modifier.height(8.dp))
+                    Text(recipe!!.description, color = Color.Gray)
 
                     Spacer(Modifier.height(14.dp))
 
-                    InfoRow("Preparation Time", "${recipe!!.preparationTime} min")
-                    InfoRow("Difficulty", recipe!!.difficulty)
-                    InfoRow("Category", recipe!!.category)
-                    InfoRow("Recipe Type", recipe!!.recipeType)
+                    InfoRowPremium("Tiempo de preparación", "${recipe!!.preparationTime} min")
+                    InfoRowPremium("Dificultad", recipe!!.difficulty)
+                    InfoRowPremium("Categoría", recipe!!.category)
+                    InfoRowPremium("Tipo de Receta", recipe!!.recipeType)
 
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(18.dp))
+                    Text(
+                        "Ingredientes",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = JameoGreen
+                    )
 
-                    Text("Ingredients", fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(6.dp))
 
                     recipe!!.recipeIngredients.forEach { ing ->
@@ -128,11 +169,9 @@ fun RecipeDetailScreen(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
-
-            Spacer(Modifier.height(20.dp))
-
-
+            // -------------------------------
+            // BOTONES
+            // -------------------------------
             if (isAddingMode) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -143,8 +182,9 @@ fun RecipeDetailScreen(
                         modifier = Modifier
                             .weight(1f)
                             .height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = JameoBlue,
+                            containerColor = JameoGreen,
                             contentColor = Color.White
                         )
                     ) { Text("Agregar") }
@@ -156,13 +196,11 @@ fun RecipeDetailScreen(
                         modifier = Modifier
                             .weight(1f)
                             .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = JameoBlue,
-                            contentColor = Color.White
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = JameoGreen
                         )
-                    ) {
-                        Text("Cancelar")
-                    }
+                    ) { Text("Cancelar") }
                 }
             } else {
                 Button(
@@ -170,20 +208,30 @@ fun RecipeDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = JameoBlue,
+                        containerColor = JameoGreen,
                         contentColor = Color.White
                     )
                 ) { Text("Volver") }
             }
         }
 
+        // -------------------------------
+        // DIALOGO PREMIUM
+        // -------------------------------
         if (showDialog && isAddingMode) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Add to Meal Plan") },
+                title = {
+                    Text(
+                        "Agregar al Meal Plan",
+                        fontWeight = FontWeight.Bold,
+                        color = JameoGreen
+                    )
+                },
                 text = {
-                    Column {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
                         var expandedType by remember { mutableStateOf(false) }
                         val typeOptions = listOf("Breakfast", "Lunch", "Snack")
@@ -196,13 +244,13 @@ fun RecipeDetailScreen(
                                 value = selectedType,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Type") },
-                                modifier = Modifier
-                                    .menuAnchor()
-                                    .fillMaxWidth(),
+                                label = { Text("Tipo") },
+                                modifier = Modifier.menuAnchor().fillMaxWidth(),
                                 trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType)
-                                }
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expandedType)
+                                },
+                                colors = textFieldColorsPremium2(),
+                                shape = RoundedCornerShape(12.dp)
                             )
 
                             ExposedDropdownMenu(
@@ -221,9 +269,6 @@ fun RecipeDetailScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-
                         var expandedDay by remember { mutableStateOf(false) }
                         val dayOptions = (1..7).toList()
 
@@ -235,13 +280,13 @@ fun RecipeDetailScreen(
                                 value = selectedDay.toString(),
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Day") },
-                                modifier = Modifier
-                                    .menuAnchor()
-                                    .fillMaxWidth(),
+                                label = { Text("Día") },
+                                modifier = Modifier.menuAnchor().fillMaxWidth(),
                                 trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDay)
-                                }
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expandedDay)
+                                },
+                                colors = textFieldColorsPremium2(),
+                                shape = RoundedCornerShape(12.dp)
                             )
 
                             ExposedDropdownMenu(
@@ -262,26 +307,25 @@ fun RecipeDetailScreen(
                     }
                 },
                 confirmButton = {
-                    Button(onClick = {
-                        if (selectedType.isBlank()) return@Button
+                    Button(
+                        onClick = {
+                            if (selectedType.isBlank()) return@Button
 
-                        val request = AddRecipeRequest(
-                            recipeId = recipeId,
-                            type = selectedType,
-                            day = selectedDay
-                        )
-
-                        viewModel.addRecipeToMealPlan(mealPlanId, request)
-
-                        showDialog = false
-                        onBack()
-                    }) {
-                        Text("Add")
-                    }
+                            val request = AddRecipeRequest(
+                                recipeId = recipeId,
+                                type = selectedType,
+                                day = selectedDay
+                            )
+                            viewModel.addRecipeToMealPlan(mealPlanId, request)
+                            showDialog = false
+                            onBack()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = JameoGreen)
+                    ) { Text("Agregar", color = Color.White) }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDialog = false }) {
-                        Text("Cancel")
+                        Text("Cancelar", color = JameoGreen)
                     }
                 }
             )
@@ -290,9 +334,19 @@ fun RecipeDetailScreen(
 }
 
 @Composable
-fun InfoRow(label: String, value: String) {
-    Column(Modifier.padding(vertical = 4.dp)) {
-        Text(label, fontWeight = FontWeight.Bold)
-        Text(value)
+fun InfoRowPremium(label: String, value: String) {
+    Column(Modifier.padding(vertical = 6.dp)) {
+        Text(label, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+        Text(value, color = Color.Black)
     }
 }
+
+@Composable
+fun textFieldColorsPremium2() = TextFieldDefaults.colors(
+    focusedIndicatorColor = JameoGreen,
+    unfocusedIndicatorColor = JameoGreen.copy(alpha = 0.4f),
+    focusedLabelColor = JameoGreen,
+    unfocusedLabelColor = Color.Gray,
+    focusedContainerColor = Color(0xFFF3F6F4),
+    unfocusedContainerColor = Color(0xFFF3F6F4),
+)

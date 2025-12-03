@@ -70,6 +70,13 @@ interface MealPlanService {
     suspend fun getRecipeById(
         @Path("recipeId") recipeId: Long
     ): Response<RecipeResponse>
+
+    @POST("/api/v1/meal-plan/{mealPlanId}/assign-to-profile/{profileId}")
+    suspend fun assignMealPlanToProfile(
+        @Path("mealPlanId") mealPlanId: Long,
+        @Path("profileId") profileId: Long
+    ): Response<MealPlanResponse>
+
 }
 
 data class MealPlanTemplateResponse(

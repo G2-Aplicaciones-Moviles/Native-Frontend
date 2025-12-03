@@ -185,6 +185,37 @@ class MealPlanViewModel(
         }
     }
 
+    fun assignMealPlanToProfile(
+        mealPlanId: Long,
+        profileId: Long,
+        onSuccess: (MealPlanResponse) -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val result = repository.assignMealPlanToProfile(mealPlanId, profileId)
+
+                if (result != null) {
+                    loadMealPlansByProfile(profileId)
+                    onSuccess(result)
+                } else {
+                    val msg = "Error asignando template al perfil"
+                    _error.value = msg
+                    onError(msg)
+                }
+
+            } catch (e: Exception) {
+                val msg = "Error asignando MealPlan: ${e.message}"
+                _error.value = msg
+                onError(msg)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
     fun addRecipeToMealPlan(
         mealPlanId: Long,
         request: AddRecipeRequest,
