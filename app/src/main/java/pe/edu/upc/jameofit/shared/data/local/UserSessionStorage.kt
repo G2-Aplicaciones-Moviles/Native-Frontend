@@ -7,12 +7,15 @@ import androidx.core.content.edit
 object UserSessionStorage {
     private const val PREF_NAME = "pref_session"
     private const val KEY_USER_ID = "user_id"
+    private const val KEY_PROFILE_ID = "profile_id"   // 👈 NUEVO
 
     private lateinit var prefs: SharedPreferences
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     }
+
+    // ========== USER ID (IAM) ==========
 
     fun saveUserId(id: Long) {
         prefs.edit { putLong(KEY_USER_ID, id) }
@@ -24,8 +27,23 @@ object UserSessionStorage {
         return if (v == Long.MIN_VALUE) null else v
     }
 
+    // ========== PROFILE ID (UserProfile) ==========
+
+    fun saveProfileId(id: Long) {
+        prefs.edit { putLong(KEY_PROFILE_ID, id) }
+    }
+
+    fun getProfileId(): Long? {
+        if (!::prefs.isInitialized) return null
+        val v = prefs.getLong(KEY_PROFILE_ID, Long.MIN_VALUE)
+        return if (v == Long.MIN_VALUE) null else v
+    }
+
     fun clear() {
         if (!::prefs.isInitialized) return
-        prefs.edit { remove(KEY_USER_ID) }
+        prefs.edit {
+            remove(KEY_USER_ID)
+            remove(KEY_PROFILE_ID) // 👈 también borramos el profileId al cerrar sesión
+        }
     }
 }

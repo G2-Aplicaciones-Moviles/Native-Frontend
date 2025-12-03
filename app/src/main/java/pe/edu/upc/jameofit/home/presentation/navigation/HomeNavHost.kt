@@ -52,6 +52,8 @@ import pe.edu.upc.jameofit.recipe.presentation.view.RecipeCreateScreen
 import pe.edu.upc.jameofit.recipe.presentation.view.RecipeListScreen
 import pe.edu.upc.jameofit.recipe.presentation.view.RecipeTemplatesScreen
 import pe.edu.upc.jameofit.recipe.presentation.viewmodel.RecipeViewModel
+import pe.edu.upc.jameofit.shared.data.local.UserSessionStorage
+import pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState
 
 private fun titleForRoute(route: String) = when {
     route.startsWith("tracking") -> "Inicio"
@@ -60,8 +62,8 @@ private fun titleForRoute(route: String) = when {
     route.startsWith("nutritionists") -> "Nutricionistas"
     route == DrawerRoute.PROFILE -> "Perfil"
     route == DrawerRoute.TEMPLATES -> "Templates de Nutricionistas"
-    route == DrawerRoute.RECIPE_TEMPLATES -> "Recetas de Expertos"// ✅ NUEVO
-    route.startsWith("drawer/template_detail") -> "Detalle del Template"  // ✅ NUEVO
+    route == DrawerRoute.RECIPE_TEMPLATES -> "Recetas de Expertos"
+    route.startsWith("drawer/template_detail") -> "Detalle del Template"
     route.startsWith("drawer/recipe_detail") -> "Detalle de Receta"
     route == DrawerRoute.EDIT_PREFERENCES -> "Editar Preferencias"
     route == DrawerRoute.GOALS -> "Gestionar objetivos"
@@ -262,7 +264,7 @@ fun HomeNavHost(
                 )
             }
 
-            // ✅ Pantalla de Editar Preferencias
+            // ✅ Editar preferencias usando profileId guardado
             composable(DrawerRoute.EDIT_PREFERENCES) {
                 val profileVm: pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
@@ -273,10 +275,10 @@ fun HomeNavHost(
                     }
                 )
 
-                val authUser by authViewModel.user.collectAsState()
+                val profileId = UserSessionStorage.getProfileId() ?: 0L
 
                 EditProfileScreen(
-                    profileId = authUser.id,
+                    profileId = profileId,
                     viewModel = profileVm,
                     onSaved = {
                         homeNavController.popBackStack()
@@ -315,7 +317,7 @@ fun HomeNavHost(
                 )
             }
 
-
+            // ✅ MEAL PLANS: usar profileId guardado
             composable(DrawerRoute.MEAL_PLANS) {
                 val mealPlanVm: MealPlanViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
@@ -335,10 +337,10 @@ fun HomeNavHost(
                     }
                 )
 
-                val authUser by authViewModel.user.collectAsState()
+                val profileId = UserSessionStorage.getProfileId()
 
-                LaunchedEffect(authUser.id) {
-                    profileVm.getProfileById(authUser.id)
+                LaunchedEffect(profileId) {
+                    profileId?.let { profileVm.getProfileById(it) }
                 }
 
                 MealPlanScreen(
@@ -348,6 +350,7 @@ fun HomeNavHost(
                 )
             }
 
+            // ✅ MEAL_PLAN_CREATE: pasar userId (IAM) + profile
             composable(DrawerRoute.MEAL_PLAN_CREATE) {
                 val mealPlanVm: MealPlanViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
@@ -368,25 +371,27 @@ fun HomeNavHost(
                 )
 
                 val uiState by profileVm.uiState.collectAsState()
+                val profileId = UserSessionStorage.getProfileId()
                 val authUser by authViewModel.user.collectAsState()
 
-                LaunchedEffect(Unit) {
-                    profileVm.getProfileById(authUser.id)
+                LaunchedEffect(profileId) {
+                    profileId?.let { profileVm.getProfileById(it) }
                 }
 
                 when (uiState) {
-                    is pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Success -> {
-                        val profile = (uiState as pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Success).profile
+                    is ProfileUiState.Success -> {
+                        val profile = (uiState as ProfileUiState.Success).profile
 
                         MealPlanCreateScreen(
                             profile = profile,
+                            userId = authUser.id,           // ✅ IAM
                             viewModel = mealPlanVm,
                             onMealPlanCreated = { homeNavController.popBackStack() },
                             navController = homeNavController
                         )
                     }
 
-                    is pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Loading -> {
+                    is ProfileUiState.Loading -> {
                         CircularProgressIndicator(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -394,8 +399,8 @@ fun HomeNavHost(
                         )
                     }
 
-                    is pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Error -> {
-                        val message = (uiState as pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState.Error).message
+                    is ProfileUiState.Error -> {
+                        val message = (uiState as ProfileUiState.Error).message
                         Text(
                             text = "Error cargando perfil: $message",
                             color = MaterialTheme.colorScheme.error,
@@ -458,6 +463,7 @@ fun HomeNavHost(
                     mealPlanViewModel = mealPlanVm
                 )
             }
+
             composable(DrawerRoute.TEMPLATES) {
                 val mealPlanVm: MealPlanViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
@@ -529,12 +535,11 @@ fun HomeNavHost(
 
                 val authUser by authViewModel.user.collectAsState()
 
-                // Usamos el ViewModel de Recipe
                 val recipeVm: RecipeViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
                         @Suppress("UNCHECKED_CAST")
                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            return getRecipeViewModel() as T // Importado de pe.edu.upc.jameofit.recipe.presentation.di
+                            return getRecipeViewModel() as T
                         }
                     }
                 )
@@ -589,7 +594,6 @@ fun HomeNavHost(
                     initialCategoryId = categoryId,
                     viewModel = recipeVm,
                     onRecipeCreated = {
-                        // Tras crear, volvemos a la lista de recetas (o a la pantalla principal)
                         homeNavController.popBackStack()
                     },
                     onBack = {

@@ -19,8 +19,8 @@ import pe.edu.upc.jameofit.R
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileUiState
 import pe.edu.upc.jameofit.profile.presentation.viewmodel.ProfileViewModel
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.LocalContentColor
+import pe.edu.upc.jameofit.shared.data.local.UserSessionStorage
 
 @Composable
 fun ProfileScreen(
@@ -35,9 +35,13 @@ fun ProfileScreen(
     val authUser by authViewModel.user.collectAsState()
     val uiState by profileViewModel.uiState.collectAsState()
 
-    LaunchedEffect(authUser.id) {
-        if (authUser.id > 0) {
-            profileViewModel.getProfileById(authUser.id)
+    // ✅ Usar el profileId guardado, NO el userId (IAM)
+    LaunchedEffect(Unit) {
+        val profileId = UserSessionStorage.getProfileId()
+        if (profileId != null && profileId > 0L) {
+            profileViewModel.getProfileById(profileId)
+        } else {
+            profileViewModel.resetState()
         }
     }
 
@@ -45,19 +49,17 @@ fun ProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // más padding inferior para evitar que el último botón quede "pegado"
             .padding(horizontal = 20.dp, vertical = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(6.dp))
 
-        // Logo libre (sin círculo)
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo JameoFit",
             modifier = Modifier
                 .size(110.dp)
-                .clip(RoundedCornerShape(8.dp)) // opcional: pequeño radio
+                .clip(RoundedCornerShape(8.dp))
         )
 
         Spacer(Modifier.height(14.dp))
@@ -125,7 +127,6 @@ fun ProfileScreen(
 
         Spacer(Modifier.height(18.dp))
 
-        // Area de tarjetas: cada tarjeta con su propio padding y separación
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -222,7 +223,7 @@ private fun QuickAccessCard(
         onClick = onClick,
         modifier = modifier
             .height(120.dp)
-            .padding(2.dp), // espacio propio de la carta
+            .padding(2.dp),
         shape = RoundedCornerShape(14.dp),
         elevation = CardDefaults.cardElevation(8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -249,7 +250,6 @@ private fun QuickAccessCard(
     }
 }
 
-// Helper functions
 private fun getActivityLevelName(id: Int): String = when (id) {
     1 -> "Sedentario"
     2 -> "Ligeramente Activo"

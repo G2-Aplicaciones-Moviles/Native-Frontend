@@ -54,7 +54,7 @@ fun EditProfileScreen(
             objective = profile.objectiveId
             gender = profile.gender
             birthDate = profile.birthDate
-            userId = profileId
+            userId = profile.userId   // ✅ AHORA SÍ: ID DEL USUARIO (IAM), NO EL PROFILE ID
         }
     }
 
@@ -250,7 +250,7 @@ fun EditProfileScreen(
                                 }
 
                                 val request = UserProfileRequest(
-                                    userId = userId,
+                                    userId = userId,              // ✅ ahora es el IAM id correcto
                                     gender = gender,
                                     height = heightValue,
                                     weight = weightValue,
@@ -262,7 +262,7 @@ fun EditProfileScreen(
                                 )
 
                                 viewModel.updateProfileAndRecalculate(
-                                    profileId = profileId,
+                                    profileId = profileId,        // ✅ este sigue siendo el id del perfil
                                     request = request,
                                     onSuccess = {
                                         Toast.makeText(context, "Perfil actualizado", Toast.LENGTH_SHORT).show()
@@ -273,7 +273,9 @@ fun EditProfileScreen(
                                     }
                                 )
                             },
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
                             enabled = uiState !is ProfileUiState.Loading
                         ) {
                             Text(

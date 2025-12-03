@@ -1,31 +1,29 @@
 package pe.edu.upc.jameofit.mealplan.presentation.view
 
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 import pe.edu.upc.jameofit.profile.domain.model.UserProfileResponse
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.Scaffold
-import androidx.navigation.NavController
-import androidx.compose.foundation.background
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MealPlanCreateScreen(
     profile: UserProfileResponse,
+    userId: Long,                      // 👈 ID IAM del usuario logueado
     viewModel: MealPlanViewModel,
     onMealPlanCreated: () -> Unit,
     navController: NavController
@@ -47,7 +45,11 @@ fun MealPlanCreateScreen(
                 title = { Text("Crear Plan Alimenticio", fontWeight = FontWeight.Bold, color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = Color.White
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -58,7 +60,9 @@ fun MealPlanCreateScreen(
                 modifier = Modifier.fillMaxWidth()
             )
         },
-        modifier = Modifier.fillMaxSize().background(Color.White)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -66,7 +70,7 @@ fun MealPlanCreateScreen(
                 .verticalScroll(scrollState)
                 .padding(horizontal = 20.dp)
                 .padding(paddingValues)
-                .padding(top = 16.dp), // Espaciado extra entre la barra verde y el primer input
+                .padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
 
@@ -116,11 +120,12 @@ fun MealPlanCreateScreen(
                             viewModel.createMealPlan(
                                 name = name,
                                 description = description,
-                                calories = 0.1,
+                                calories = 0.1,   // luego si quieres lo calculas de verdad
                                 carbs = 0.1,
                                 proteins = 0.1,
                                 fats = 0.1,
-                                profileId = profile.id,
+                                userId = userId,          // ✅ IAM
+                                profileId = profile.id,   // ✅ UserProfile.id
                                 category = category,
                                 isCurrent = isCurrent,
                                 tags = tagsText.split(",")
@@ -138,7 +143,7 @@ fun MealPlanCreateScreen(
                     .fillMaxWidth()
                     .height(55.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2196F3), // Celeste igual que otras vistas
+                    containerColor = Color(0xFF2196F3),
                     contentColor = Color.White
                 ),
                 shape = MaterialTheme.shapes.medium
