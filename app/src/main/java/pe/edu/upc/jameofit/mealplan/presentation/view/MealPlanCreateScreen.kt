@@ -1,29 +1,34 @@
 package pe.edu.upc.jameofit.mealplan.presentation.view
 
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 import pe.edu.upc.jameofit.profile.domain.model.UserProfileResponse
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Scaffold
+import androidx.navigation.NavController
+import androidx.compose.foundation.background
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MealPlanCreateScreen(
     profile: UserProfileResponse,
     viewModel: MealPlanViewModel,
     onMealPlanCreated: () -> Unit,
-    modifier: Modifier = Modifier
+    navController: NavController
 ) {
     val scope = rememberCoroutineScope()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -36,58 +41,73 @@ fun MealPlanCreateScreen(
     var tagsText by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Text(
-            text = "Crear Plan Alimenticio",
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Nombre del plan") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = description,
-            onValueChange = { description = it },
-            label = { Text("Descripción") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = category,
-            onValueChange = { category = it },
-            label = { Text("Categoría (Ej. Definición, Mantenimiento)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = tagsText,
-            onValueChange = { tagsText = it },
-            label = { Text("Tags (separa con comas)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Checkbox(
-                checked = isCurrent,
-                onCheckedChange = { isCurrent = it }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Crear Plan Alimenticio", fontWeight = FontWeight.Bold, color = Color.White) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF4CAF50),
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                ),
+                modifier = Modifier.fillMaxWidth()
             )
-            Text("Marcar como plan actual")
-        }
+        },
+        modifier = Modifier.fillMaxSize().background(Color.White)
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 20.dp)
+                .padding(paddingValues)
+                .padding(top = 16.dp), // Espaciado extra entre la barra verde y el primer input
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nombre del plan") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                label = { Text("Descripción") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = category,
+                onValueChange = { category = it },
+                label = { Text("Categoría (Ej. Definición, Mantenimiento)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = tagsText,
+                onValueChange = { tagsText = it },
+                label = { Text("Tags (separa con comas)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Checkbox(
+                    checked = isCurrent,
+                    onCheckedChange = { isCurrent = it }
+                )
+                Text("Marcar como plan actual")
+            }
 
             Button(
                 onClick = {
@@ -116,7 +136,12 @@ fun MealPlanCreateScreen(
                 enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(55.dp)
+                    .height(55.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF2196F3), // Celeste igual que otras vistas
+                    contentColor = Color.White
+                ),
+                shape = MaterialTheme.shapes.medium
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
@@ -139,5 +164,4 @@ fun MealPlanCreateScreen(
             }
         }
     }
-
-
+}

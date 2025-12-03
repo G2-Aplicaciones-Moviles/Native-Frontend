@@ -118,17 +118,6 @@ fun HomeScaffold(
                     }
                 )
                 NavigationDrawerItem(
-                    label = { Text("Suscripciones") },
-                    selected = currentDestination == DrawerRoute.SUBSCRIPTIONS,
-                    onClick = { closeAnd { onNavigateDrawer(DrawerRoute.SUBSCRIPTIONS) } },
-                    icon = {
-                        Icon(
-                            painterResource(id = R.drawable.subscriptions),
-                            contentDescription = null
-                        )
-                    }
-                )
-                NavigationDrawerItem(
                     label = { Text("Preguntas Frecuentes") },
                     selected = currentDestination == DrawerRoute.FAQ,
                     onClick = { closeAnd { onNavigateDrawer(DrawerRoute.FAQ) } },

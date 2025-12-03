@@ -70,7 +70,6 @@ private fun titleForRoute(route: String) = when {
         "Recetas por Categoría"
     }
     route.startsWith(DrawerRoute.RECIPE_CREATE.substringBefore("/{")) -> "Crear Receta"
-    route == DrawerRoute.SUBSCRIPTIONS -> "Suscripciones"
     route == DrawerRoute.FAQ -> "Preguntas frecuentes"
     else -> "Inicio"
 }
@@ -103,7 +102,6 @@ fun HomeNavHost(
         DrawerRoute.EDIT_PREFERENCES,
         DrawerRoute.GOALS,
         DrawerRoute.MEAL_PLANS,
-        DrawerRoute.SUBSCRIPTIONS,
         DrawerRoute.FAQ,
         DrawerRoute.RECOMMENDATIONS, -> currentRoute
         else -> TabGraph.TRACKING
@@ -125,7 +123,6 @@ fun HomeNavHost(
                 DrawerRoute.EDIT_PREFERENCES,
                 DrawerRoute.GOALS,
                 DrawerRoute.MEAL_PLANS,
-                DrawerRoute.SUBSCRIPTIONS,
                 DrawerRoute.FAQ, -> true
                 else -> false
             }
@@ -384,7 +381,8 @@ fun HomeNavHost(
                         MealPlanCreateScreen(
                             profile = profile,
                             viewModel = mealPlanVm,
-                            onMealPlanCreated = { homeNavController.popBackStack() }
+                            onMealPlanCreated = { homeNavController.popBackStack() },
+                            navController = homeNavController
                         )
                     }
 
@@ -521,7 +519,6 @@ fun HomeNavHost(
                 )
             }
 
-            composable(DrawerRoute.SUBSCRIPTIONS) { PlaceholderScreen("Suscripciones") }
             composable(DrawerRoute.FAQ) { FaqScreen() }
 
             composable(

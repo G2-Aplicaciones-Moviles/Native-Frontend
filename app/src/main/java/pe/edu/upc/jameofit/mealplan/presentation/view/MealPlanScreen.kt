@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +35,7 @@ data class RecipeCategory(
     val route: String
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MealPlanScreen(
     navController: NavHostController,
@@ -101,122 +104,121 @@ fun MealPlanScreen(
         )
     )
 
-// ...
-
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(categories) { cat ->
-            Card(
-                modifier = Modifier
-                    // ...
-                    .clickable { navController.navigate(cat.route) }, // cat.route = "recipe_list/1/Desayunos"
-                // ...
-            ) { /* ... */ }
-        }
-    }
-
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp)
-    ) {
-        item {
-            Text(
-                text = "Recetas",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Planes de comida",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = MaterialTheme.typography.headlineSmall.fontSize,
+                        color = Color.White
+                    )
+                },
+                navigationIcon = {
+                    // Si hay pantalla anterior, muestra flecha; si no, no muestra nada
+                    if (navController.previousBackStackEntry != null) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF4CAF50),
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                ),
+                modifier = Modifier.fillMaxWidth()
             )
-            Text(
-                text = "Tap para ver detalle",
-                fontSize = 14.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+        },
+        modifier = Modifier.fillMaxSize().background(Color.White)
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 20.dp)
+        ) {
+            item {
+                Text(
+                    text = "Recetas",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                Text(
+                    text = "Tap para ver detalle",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
 
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(categories) { cat ->
-                    Card(
-                        modifier = Modifier
-                            .width(160.dp)
-                            .height(120.dp)
-                            .clickable { navController.navigate(cat.route) },
-                        elevation = CardDefaults.cardElevation(4.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.SpaceBetween
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(categories) { cat ->
+                        Card(
+                            modifier = Modifier
+                                .width(160.dp)
+                                .height(120.dp)
+                                .clickable { navController.navigate(cat.route) },
+                            elevation = CardDefaults.cardElevation(8.dp),
+                            shape = MaterialTheme.shapes.medium
                         ) {
-                            Image(
-                                painter = painterResource(id = cat.imageRes),
-                                contentDescription = cat.title,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(80.dp)
-                            )
-                            Text(
-                                text = cat.title,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(8.dp)
-                            )
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Image(
+                                    painter = painterResource(id = cat.imageRes),
+                                    contentDescription = cat.title,
+                                    modifier = Modifier.fillMaxWidth().height(70.dp)
+                                )
+                                Text(
+                                    text = cat.title,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(24.dp))
 
-            Text(
-                text = "Visualizar recetas creadas por nutricionistas",
-                fontSize = 14.sp,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            Button(
-                onClick = { navController.navigate(DrawerRoute.RECIPE_TEMPLATES) }, // 🆕 Usaremos una nueva ruta: RECIPE_TEMPLATES
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2196F3),
-                    contentColor = Color.White
-                ),
-                shape = MaterialTheme.shapes.medium
-            ) {
                 Text(
-                    "Ver Recetas de Expertos",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Visualizar recetas creadas por nutricionistas",
+                    fontSize = 14.sp,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-            }
 
-            Spacer(Modifier.height(24.dp))
+                Button(
+                    onClick = { navController.navigate(DrawerRoute.RECIPE_TEMPLATES) },
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2196F3),
+                        contentColor = Color.White
+                    ),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(
+                        "Ver Recetas de Expertos",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
-            // ✅ NUEVO: Card destacada para Templates de Nutricionistas
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { navController.navigate(DrawerRoute.TEMPLATES) },
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF2196F3)
-                ),
-                elevation = CardDefaults.cardElevation(6.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Spacer(Modifier.height(24.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth().clickable { navController.navigate(DrawerRoute.TEMPLATES) },
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2196F3)),
+                    elevation = CardDefaults.cardElevation(8.dp),
+                    shape = MaterialTheme.shapes.medium
                 ) {
                     Column(
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth().padding(20.dp)
                     ) {
                         Text(
-                            text = "🥗 Planes de Expertos",
+                            text = "Planes de Expertos",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -228,82 +230,73 @@ fun MealPlanScreen(
                             color = Color.White.copy(alpha = 0.9f)
                         )
                     }
-                    Image(
-                        painter = painterResource(id = R.drawable.menu),
-                        contentDescription = "Templates",
-                        modifier = Modifier.size(40.dp),
-                        colorFilter = ColorFilter.tint(Color.White)
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = "Tus Meal Plans",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                Button(
+                    onClick = { navController.navigate(DrawerRoute.MEAL_PLAN_CREATE) },
+                    modifier = Modifier.fillMaxWidth().height(54.dp).padding(vertical = 8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50),
+                        contentColor = Color.White
+                    ),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(
+                        "Crear nuevo MealPlan",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
+
+                Spacer(Modifier.height(8.dp))
             }
 
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = "Tus Meal Plans",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            Button(
-                onClick = { navController.navigate(DrawerRoute.MEAL_PLAN_CREATE) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-                    .padding(vertical = 8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4CAF50),
-                    contentColor = Color.White
-                ),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(
-                    "Crear nuevo MealPlan",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
-        }
-
-        if (isLoading) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFF4CAF50))
+            if (isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFF4CAF50))
+                    }
+                }
+            } else if (error != null) {
+                item {
+                    Text(
+                        text = "Error: $error",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else if (mealPlans.isEmpty()) {
+                item {
+                    Text(
+                        text = "Aún no tienes MealPlans creados.",
+                        color = Color.Gray,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else {
+                items(mealPlans) { plan ->
+                    MealPlanCard(plan = plan, onClick = {
+                        navController.navigate("drawer/meal_plan_detail/${plan.id}")
+                    })
                 }
             }
-        } else if (error != null) {
-            item {
-                Text(
-                    text = "Error: $error",
-                    color = Color.Red,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-        } else if (mealPlans.isEmpty()) {
-            item {
-                Text(
-                    text = "Aún no tienes MealPlans creados.",
-                    color = Color.Gray,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-        } else {
-            items(mealPlans) { plan ->
-                MealPlanCard(plan = plan, onClick = {
-                    navController.navigate("drawer/meal_plan_detail/${plan.id}")
-                })
-            }
-        }
 
-        item { Spacer(Modifier.height(80.dp)) }
+            item { Spacer(Modifier.height(80.dp)) }
+        }
     }
 }
 

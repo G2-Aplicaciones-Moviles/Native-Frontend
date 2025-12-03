@@ -16,7 +16,14 @@ import androidx.navigation.NavController
 import pe.edu.upc.jameofit.iam.presentation.viewmodel.AuthViewModel
 import pe.edu.upc.jameofit.mealplan.presentation.viewmodel.MealPlanViewModel
 import pe.edu.upc.jameofit.ui.theme.JameoBlue
+import java.text.DecimalFormat
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Scaffold
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun MealPlanDetailScreen(
     mealPlanId: Long,
@@ -40,200 +47,230 @@ fun MealPlanDetailScreen(
         viewModel.loadEntries(mealPlanId)
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF6F6FB))
-            .padding(16.dp)
-    ) {
-        when {
-            isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-
-            error != null -> Text(
-                text = error ?: "",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.align(Alignment.Center)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(mealPlan?.name ?: "Detalle del plan", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF4CAF50),
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
             )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color(0xFFF6F6FB))
+                .padding(16.dp)
+                .padding(paddingValues)
+        ) {
+            when {
+                isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 
-            mealPlan == null -> Text(
-                text = "Meal plan no encontrado.",
-                modifier = Modifier.align(Alignment.Center)
-            )
+                error != null -> Text(
+                    text = error ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center)
+                )
 
-            else -> mealPlan?.let { plan ->
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                mealPlan == null -> Text(
+                    text = "Meal plan no encontrado.",
+                    modifier = Modifier.align(Alignment.Center)
+                )
 
-                    // -------------------------
-                    //   🟦 HEADER DEL MEALPLAN
-                    // -------------------------
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(6.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White
-                            ),
-                            shape = MaterialTheme.shapes.large
-                        ) {
-                            Column(
-                                Modifier.padding(20.dp)
-                            ) {
-                                Text(
-                                    text = plan.name,
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    text = plan.description,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Gray
-                                )
-                                Spacer(Modifier.height(12.dp))
-
-                                Column(modifier = Modifier.fillMaxWidth()) {
-
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Calorías", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                            Text("${mealPlan?.calories} kcal", fontSize = 15.sp)
-                                        }
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Carbs", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                            Text("${mealPlan?.carbs} g", fontSize = 15.sp)
-                                        }
-
-                                    }
-
-                                }
-
-                                Column(modifier = Modifier.fillMaxWidth()) {
-
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Proteínas", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                            Text("${mealPlan?.proteins} g", fontSize = 15.sp)
-                                        }
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Grasas", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                            Text("${mealPlan?.fats} g", fontSize = 15.sp)
-                                        }
-                                    }
-
-
-                                }
-                            }
+                else -> mealPlan?.let { plan ->
+                    // Helper para formatear números siempre con 2 decimales (ej. 12.50)
+                    val df = DecimalFormat("0.00")
+                    fun formatNumber(value: Any?): String {
+                        return when (value) {
+                            null -> "-"
+                            is Number -> df.format(value.toDouble())
+                            is String -> value.toDoubleOrNull()?.let { df.format(it) } ?: value
+                            else -> value.toString()
                         }
                     }
 
-                    item {
-                        Text(
-                            text = "Recetas del plan",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
 
-                    if (entries.isEmpty()) {
+                        // -------------------------
+                        //   🟦 HEADER DEL MEALPLAN
+                        // -------------------------
                         item {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                elevation = CardDefaults.cardElevation(4.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White)
+                                elevation = CardDefaults.cardElevation(6.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color.White
+                                ),
+                                shape = MaterialTheme.shapes.large
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(20.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    Modifier.padding(20.dp)
                                 ) {
                                     Text(
-                                        "Aún no tienes recetas agregadas",
-                                        fontWeight = FontWeight.SemiBold
+                                        text = plan.name,
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Bold
                                     )
+                                    Spacer(Modifier.height(4.dp))
                                     Text(
-                                        "Agrega recetas para completar tu plan",
-                                        color = Color.Gray,
-                                        fontSize = 14.sp
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        items(entries) { entry ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                elevation = CardDefaults.cardElevation(4.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                shape = MaterialTheme.shapes.medium
-                            ) {
-                                Column(Modifier.padding(16.dp)) {
-                                    Text(
-                                        text = entry.recipeName ?: "Receta sin nombre",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    Text(
-                                        text = "Día: ${entry.day}",
+                                        text = plan.description,
+                                        style = MaterialTheme.typography.bodyMedium,
                                         color = Color.Gray
                                     )
+                                    Spacer(Modifier.height(12.dp))
+
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 12.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Calorías", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                Text("${formatNumber(plan.calories)} kcal", fontSize = 15.sp)
+                                            }
+
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Carbs", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                Text("${formatNumber(plan.carbs)} g", fontSize = 15.sp)
+                                            }
+
+                                        }
+
+                                    }
+
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 12.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Proteínas", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                Text("${formatNumber(plan.proteins)} g", fontSize = 15.sp)
+                                            }
+
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Grasas", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                Text("${formatNumber(plan.fats)} g", fontSize = 15.sp)
+                                            }
+                                        }
+
+
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 20.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Button(
-                                onClick = {
-                                    navController.navigate("drawer/add_recipe_to_meal_plan/$mealPlanId")
-                                },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = JameoBlue,
-                                    contentColor = Color.White
-                                )
-                            ) {
-                                Text("Agregar receta")
+                        item {
+                            Text(
+                                text = "Recetas del plan",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        if (entries.isEmpty()) {
+                            item {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    elevation = CardDefaults.cardElevation(4.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(20.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            "Aún no tienes recetas agregadas",
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            "Agrega recetas para completar tu plan",
+                                            color = Color.Gray,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
                             }
+                        } else {
+                            items(entries) { entry ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    elevation = CardDefaults.cardElevation(4.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                    shape = MaterialTheme.shapes.medium
+                                ) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Text(
+                                            text = entry.recipeName ?: "Receta sin nombre",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "Día: ${entry.day}",
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Button(
-                                onClick = {
-                                    viewModel.deleteMealPlanWithTracking(
-                                        mealPlanId = mealPlanId,
-                                        userId = authUser.id,
-                                        onSuccess = { navController.popBackStack() },
-                                        onError = {}
-                                    )
-                                },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = JameoBlue,
-                                    contentColor = Color.White
-                                )
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 20.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Eliminar")
+                                Button(
+                                    onClick = {
+                                        navController.navigate("drawer/add_recipe_to_meal_plan/$mealPlanId")
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = JameoBlue,
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text("Agregar receta")
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Button(
+                                    onClick = {
+                                        viewModel.deleteMealPlanWithTracking(
+                                            mealPlanId = mealPlanId,
+                                            userId = authUser.id,
+                                            onSuccess = { navController.popBackStack() },
+                                            onError = {}
+                                        )
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = JameoBlue,
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text("Eliminar")
+                                }
                             }
                         }
                     }
