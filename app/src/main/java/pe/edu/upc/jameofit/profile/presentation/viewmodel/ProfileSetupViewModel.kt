@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import pe.edu.upc.jameofit.profile.data.repository.ProfileRepository
 import pe.edu.upc.jameofit.profile.domain.model.UserProfileRequest
+import pe.edu.upc.jameofit.shared.data.local.UserSessionStorage   // 👈 NUEVO
 import pe.edu.upc.jameofit.tracking.data.repository.TrackingRepository
 
 sealed class ProfileSetupUiState {
@@ -42,12 +43,15 @@ class ProfileSetupViewModel(
 
                 val profileId = profileResp?.id ?: throw IllegalStateException("Profile ID is null")
 
+                // 1.1 Guardar el id del perfil en la sesión 👇
+                UserSessionStorage.saveProfileId(profileId)
+
                 // 2. Crear TrackingGoal desde el Profile
                 withContext(Dispatchers.IO) {
                     trackingRepository.createGoalFromProfile(profileId)
                 }
 
-                // 3. Crear Tracking para el usuario
+                // 3. Crear Tracking para el usuario (usa userId IAM del request, esto está bien)
                 withContext(Dispatchers.IO) {
                     trackingRepository.createTracking(request.userId)
                 }

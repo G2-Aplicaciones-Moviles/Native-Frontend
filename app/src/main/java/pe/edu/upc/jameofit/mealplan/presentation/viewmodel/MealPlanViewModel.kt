@@ -33,10 +33,13 @@ class MealPlanViewModel(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
+
     private val _recipes = MutableStateFlow<List<RecipeResponse>>(emptyList())
     val recipes: StateFlow<List<RecipeResponse>> = _recipes
+
     private val _currentRecipe = MutableStateFlow<RecipeResponse?>(null)
     val currentRecipe: StateFlow<RecipeResponse?> = _currentRecipe
+
     private var cachedTrackingId: Long? = null
     private var cachedUserId: Long? = null
 
@@ -92,7 +95,11 @@ class MealPlanViewModel(
         }
     }
 
-    // ✅ ACTUALIZADO: Ahora pasa userId al repository
+    /**
+     * Crea un MealPlan asociado a:
+     * - userId (IAM) en la URL
+     * - profileId (UserProfile.id) en el body
+     */
     fun createMealPlan(
         name: String,
         description: String,
@@ -100,7 +107,8 @@ class MealPlanViewModel(
         carbs: Double,
         proteins: Double,
         fats: Double,
-        profileId: Long,  // Este es el userId
+        userId: Long,      // ID del usuario (IAM)
+        profileId: Long,   // ID del UserProfile
         category: String,
         isCurrent: Boolean,
         tags: List<String>
@@ -120,8 +128,8 @@ class MealPlanViewModel(
                     isCurrent = isCurrent,
                     tags = tags
                 )
-                // ✅ CAMBIO: Ahora pasa profileId como userId
-                repository.createMealPlan(userId = profileId, request = request)
+
+                repository.createMealPlan(userId = userId, request = request)
                 loadMealPlans()
             } catch (e: Exception) {
                 _error.value = "Error creando MealPlan: ${e.message}"
@@ -230,7 +238,7 @@ class MealPlanViewModel(
         }
     }
 
-    // ✅ NUEVO: Cargar templates
+    // ✅ Cargar templates
     fun loadTemplates() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -243,6 +251,7 @@ class MealPlanViewModel(
             }
         }
     }
+
     fun loadRecipes() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -288,5 +297,4 @@ class MealPlanViewModel(
     fun clearCurrentRecipe() {
         _currentRecipe.value = null
     }
-
 }
